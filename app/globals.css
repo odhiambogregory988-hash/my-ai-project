@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-ink: 26 23 20;
+    --color-clay: 140 123 107;
+    --color-sand: 212 197 178;
+    --color-cream: 245 240 235;
+    --color-ivory: 250 248 245;
+    --color-amber: 200 169 110;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-orwas-ivory text-orwas-ink font-body;
+    font-weight: 300;
+  }
+
+  ::selection {
+    @apply bg-orwas-amber/20 text-orwas-ink;
+  }
+}
+
+@layer components {
+  /* Scroll-driven reveal — pure CSS, no JS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+
+  .reveal-delay-1 { animation-delay: 0.1s; }
+  .reveal-delay-2 { animation-delay: 0.2s; }
+  .reveal-delay-3 { animation-delay: 0.3s; }
+
+  .soft-card {
+    @apply border border-orwas-clay/10 bg-orwas-cream shadow-[0_20px_60px_rgba(26,23,20,0.03)];
+  }
+
+  /* Horizontal rule — amber accent line */
+  .line-accent {
+    @apply h-px origin-left bg-orwas-amber;
+    animation: reveal-line 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 50%;
+  }
+
+  /* Image hover — subtle scale + desaturate lift */
+  .img-hover {
+    @apply overflow-hidden;
+  }
+  .img-hover img {
+    @apply transition-all duration-700 ease-out-expo;
+  }
+  .img-hover:hover img {
+    transform: scale(1.04);
+    filter: brightness(1.05);
+  }
+}
+
+@keyframes reveal-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
