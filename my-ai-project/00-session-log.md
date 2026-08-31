@@ -436,4 +436,97 @@ Track your progress across sessions.
 
 ---
 
+## Session 13 — August 31, 2026
+
+**What we did:**
+- Redesigned cart to match Jumia's layout style
+- Removed all blur effects (backdrop-blur, blur-sm)
+- Changed background from cream to clean white
+- Added Jumia-style free shipping banner (green checkmark when qualified)
+- Added progress bar for free shipping threshold
+- Clean product rows with image + name + price + quantity
+- Jumia-style quantity controls (bordered, with gray background)
+- Order summary section with subtotal, delivery, total
+- "Proceed to Checkout" button (amber/orange like Jumia)
+- Trust bar at bottom (Secure, Free Delivery, Returns)
+- "Safe and Secure Payment" text under checkout
+- Typecheck passed — no errors ✅
+
+**What you learned:**
+- How to replicate Jumia's cart design patterns
+- How to remove blur effects for a cleaner look
+- How to create professional e-commerce cart layouts
+- How to add trust signals (Secure, Free Delivery, Returns)
+- How to structure order summary sections
+
+**Files changed:**
+- `components/CartDrawer.tsx` — Complete redesign to Jumia-style layout
+
+**Cart now has:**
+- Clean white background (no blur)
+- Jumia-style header with item count
+- Free shipping banner with progress bar
+- Clean product rows with images
+- Category badges on images
+- Quantity controls with borders
+- Order summary with delivery calculation
+- Amber "Proceed to Checkout" button
+- Trust bar (Secure, Free Delivery, Returns)
+- "Safe and Secure Payment" text
+
+**Next time, we can:**
+- Add product detail pages
+- Implement the caching APIs
+- Create checkout page
+- Connect to Supabase for real data
+- Add more interactive features
+
+---
+
+## Session 14 — August 31, 2026
+
+**What we did:**
+- Designed a completely unique luxury cart experience for ORWAS
+- Replaced Jumia-style cart with editorial fashion cart
+- Added "Your Selection" header instead of "Shopping Cart"
+- Changed "Continue Shopping" to "Explore Collection"
+- Added "Complete Your Look" upsell section
+- Used "Complimentary" instead of "FREE" for delivery
+- Minimal trust indicators (Secure, Free over KSh 10,000, Returns)
+- Solid black backdrop (no see-through)
+- Fashion card style for product images
+- Editorial typography with tracking-wider
+- Premium hover effects on buttons
+- Typecheck passed — no errors ✅
+
+**What you learned:**
+- How to create luxury fashion brand cart experiences
+- How to use editorial typography (uppercase, tracking, font-display)
+- How to design minimal, premium UI elements
+- How to create "Complete Your Look" upsell sections
+- How to use inline styles for forced solid colors
+
+**Files changed:**
+- `components/CartDrawer.tsx` — Complete redesign to luxury fashion cart
+
+**Cart now has:**
+- "Your Selection" header (editorial style)
+- "Bag" title (luxury fashion term)
+- Editorial typography (uppercase, tracking, font-display)
+- Fashion card style product images
+- "Complete Your Look" upsell section
+- "Complimentary" delivery (luxury term)
+- Minimal trust indicators
+- Solid black backdrop (no see-through)
+- Premium hover effects
+- Clean, editorial aesthetic
+
+**Next time, we can:**
+- Add product detail pages
+- Implement the caching APIs
+- Create checkout page
+- Connect to Supabase for real data
+
+---
+
 *Update this after every session.*
