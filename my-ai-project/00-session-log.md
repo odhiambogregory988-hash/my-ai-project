@@ -361,4 +361,79 @@ Track your progress across sessions.
 
 ---
 
+## Session 11 — August 31, 2026
+
+**What we did:**
+- Fixed video AbortError by removing video entirely
+- Replaced 4K video showcase with interactive product photo
+- Used existing collection images (clark.jpeg, clark-2.jpeg, collection-1.jpeg)
+- Added smooth image transitions between chapters
+- Maintained chapter navigation (Origin, Craft, Vision)
+- Added gradient overlay for text readability
+- Added grain texture for premium feel
+- Typecheck passed — no errors ✅
+
+**What you learned:**
+- How to replace video with image-based experiences
+- How to use AnimatePresence for smooth image transitions
+- How to create interactive photo showcases
+- How to maintain brand storytelling with static images
+- How to simplify complex components while keeping functionality
+
+**Files changed:**
+- `components/VideoShowcase.tsx` — Replaced video with interactive product photo
+
+**Showcase now has:**
+- Interactive product photos (not video)
+- Smooth image transitions between chapters
+- Chapter navigation (Origin, Craft, Vision)
+- Gradient overlays for readability
+- Grain texture for premium feel
+- CTA button to collections
+- Scroll indicator
+
+**Next time, we can:**
+- Add product detail pages
+- Implement the caching APIs
+- Create checkout page
+- Connect to Supabase for real data
+- Add more interactive features
+
+---
+
+## Session 12 — August 31, 2026
+
+**What we did:**
+- Added product images to the "Object & Form" section (FeaturedProducts)
+- Updated DEFAULT_PRODUCTS in store.ts with real product images
+- Each product now shows a photo from your collections folder
+- Added descriptions to all products
+- Updated prices to KSh format
+- Typecheck passed — no errors ✅
+
+**What you learned:**
+- How product data is structured (id, name, price, image, etc.)
+- How to connect images to products in a store
+- How FeaturedProducts component renders products from the store
+- How the horizontal scroll section works
+
+**Files changed:**
+- `lib/store.ts` — Added images and descriptions to DEFAULT_PRODUCTS
+
+**Object & Form now shows:**
+1. Clarks Desert Boot — KSh 8,500 — Footwear
+2. Nairobi Street Style — KSh 3,500 — Clothing
+3. Clarks Wallabee — KSh 7,200 — Footwear
+4. Urban Essentials — KSh 2,800 — Clothing
+5. Heritage Edit — KSh 4,500 — Clothing
+6. Archive Collection — KSh 5,500 — Accessories
+
+**Next time, we can:**
+- Add product detail pages
+- Implement the caching APIs
+- Create checkout page
+- Connect to Supabase for real data
+
+---
+
 *Update this after every session.*

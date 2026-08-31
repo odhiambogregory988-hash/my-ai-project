@@ -42,12 +42,12 @@ export interface CartItem extends Product {
 }
 
 export const DEFAULT_PRODUCTS: Product[] = [
-  { id: "1", name: "Raw Linen Overshirt", price: 285, collection: "Earthbound", inventory: 12, category: "Clothing" },
-  { id: "2", name: "Merino Rib Knit", price: 195, collection: "Quiet Hours", inventory: 8, category: "Clothing" },
-  { id: "3", name: "Leather Journal Folio", price: 145, collection: "Provenance", inventory: 18, category: "Accessories" },
-  { id: "4", name: "Cashmere Beanie", price: 95, collection: "Earthbound", inventory: 24, category: "Accessories" },
-  { id: "5", name: "Riverstone Trail Runner", price: 320, collection: "Provenance", inventory: 6, category: "Footwear" },
-  { id: "6", name: "Ceramic Pour-Over Set", price: 110, collection: "Solstice", inventory: 15, category: "Other" },
+  { id: "1", name: "Clarks Desert Boot", price: 8500, collection: "Heritage", inventory: 15, category: "Footwear", image: "/collections/clark.jpeg", description: "British heritage footwear — iconic since 1950" },
+  { id: "2", name: "Nairobi Street Style", price: 3500, collection: "Street", inventory: 8, category: "Clothing", image: "/collections/wakadinali.jpeg", description: "Urban culture meets contemporary fashion" },
+  { id: "3", name: "Clarks Wallabee", price: 7200, collection: "Heritage", inventory: 3, category: "Footwear", image: "/collections/clark-2.jpeg", description: "Timeless suede silhouette — street culture staple" },
+  { id: "4", name: "Urban Essentials", price: 2800, collection: "Street", inventory: 22, category: "Clothing", image: "/collections/collection-1.jpeg", description: "Everyday pieces for the modern wardrobe" },
+  { id: "5", name: "Heritage Edit", price: 4500, collection: "Heritage", inventory: 2, category: "Clothing", image: "/collections/collection-2.jpeg", description: "Classic styles reimagined for today" },
+  { id: "6", name: "Archive Collection", price: 5500, collection: "Archive", inventory: 6, category: "Accessories", image: "/collections/collection-4.jpeg", description: "Rare finds and vintage pieces" },
 ];
 
 export const PRODUCTS_STORAGE_KEY = "orwas-products";
