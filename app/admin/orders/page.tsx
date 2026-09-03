@@ -14,19 +14,52 @@ import {
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [mode, setMode] = useState<"supabase" | "demo">("supabase");
 
   useEffect(() => {
-    setOrders(loadOrders());
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/data");
+        const data = await res.json();
+        if (data.configured) {
+          setMode("supabase");
+          setOrders(data.orders);
+          return;
+        }
+      } catch {
+        // fall through to demo
+      }
+      setMode("demo");
+      setOrders(await loadOrders());
+    })();
   }, []);
 
-  const changeStatus = (id: string, status: OrderStatus) => {
-    updateOrderStatus(id, status);
-    setOrders(loadOrders());
+  const changeStatus = async (id: string, status: OrderStatus) => {
+    if (mode === "supabase") {
+      await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update-order-status", id, status }),
+      });
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    } else {
+      await updateOrderStatus(id, status);
+      setOrders(await loadOrders());
+    }
   };
 
-  const removeOrder = (id: string) => {
-    saveOrders(orders.filter((o) => o.id !== id));
-    setOrders(loadOrders());
+  const removeOrder = async (id: string) => {
+    if (mode === "supabase") {
+      await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete-order", id }),
+      });
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+    } else {
+      await saveOrders(orders.filter((o) => o.id !== id));
+      setOrders(await loadOrders());
+    }
   };
 
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
@@ -51,6 +84,16 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       </header>
+
+      {mode === "demo" && (
+        <div className="mb-8 border border-orwas-amber/40 bg-orwas-amber/10 px-5 py-4 text-sm text-orwas-ink">
+          <p className="font-medium">Browser demo mode</p>
+          <p className="mt-1 text-xs text-orwas-clay">
+            Add <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> to your environment and run{" "}
+            <span className="font-mono">supabase/schema.sql</span> to manage real orders.
+          </p>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div className="rounded-sm border border-orwas-sand/60 bg-white px-8 py-16 text-center">

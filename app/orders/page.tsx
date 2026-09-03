@@ -24,33 +24,35 @@ function OrdersContent() {
   const [placed, setPlaced] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
+    (async () => {
+      const session = await getSession();
 
-    if (!session) {
-      router.replace("/login?next=/orders");
-      return;
-    }
-
-    // Auto-place any order that was waiting for the customer to sign in
-    const pending = window.sessionStorage.getItem("orwas-pending-order");
-    if (pending) {
-      window.sessionStorage.removeItem("orwas-pending-order");
-      try {
-        const items = JSON.parse(pending);
-        if (Array.isArray(items) && items.length > 0) {
-          createOrder(session.email, session.name, items);
-          clearCart();
-          setPlaced(true);
-        }
-      } catch {
-        // ignore malformed pending order
+      if (!session) {
+        router.replace("/login?next=/orders");
+        return;
       }
-    }
 
-    if (searchParams.get("placed") === "1") setPlaced(true);
+      // Auto-place any order that was waiting for the customer to sign in
+      const pending = window.sessionStorage.getItem("orwas-pending-order");
+      if (pending) {
+        window.sessionStorage.removeItem("orwas-pending-order");
+        try {
+          const items = JSON.parse(pending);
+          if (Array.isArray(items) && items.length > 0) {
+            await createOrder(session, items);
+            clearCart();
+            setPlaced(true);
+          }
+        } catch {
+          // ignore malformed pending order
+        }
+      }
 
-    setOrders(ordersFor(session.email));
-    setReady(true);
+      if (searchParams.get("placed") === "1") setPlaced(true);
+
+      setOrders(await ordersFor(session.email));
+      setReady(true);
+    })();
   }, [router, searchParams, clearCart]);
 
   if (!ready) return null;

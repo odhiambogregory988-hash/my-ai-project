@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { loadCustomers } from "@/lib/accounts";
-import { loadOrders, formatDate } from "@/lib/accounts";
+import { loadCustomers, loadOrders, formatDate, Order } from "@/lib/accounts";
 import { loadProducts } from "@/lib/store";
 
 const SECTIONS = [
@@ -26,19 +25,38 @@ const SECTIONS = [
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({ products: 0, customers: 0, orders: 0, revenue: 0 });
-  const [recentOrders, setRecentOrders] = useState<ReturnType<typeof loadOrders>>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [mode, setMode] = useState<"supabase" | "demo">("supabase");
 
   useEffect(() => {
-    const products = loadProducts();
-    const customers = loadCustomers();
-    const orders = loadOrders();
-    setStats({
-      products: products.length,
-      customers: customers.length,
-      orders: orders.length,
-      revenue: orders.reduce((sum, o) => sum + o.total, 0),
-    });
-    setRecentOrders(orders.slice(0, 4));
+    (async () => {
+      const products = loadProducts();
+
+      const applyData = (customers: { length: number }, orders: Order[]) => {
+        setStats({
+          products: products.length,
+          customers: customers.length,
+          orders: orders.length,
+          revenue: orders.reduce((sum, o) => sum + o.total, 0),
+        });
+        setRecentOrders(orders.slice(0, 4));
+      };
+
+      try {
+        const res = await fetch("/api/admin/data");
+        const data = await res.json();
+        if (data.configured) {
+          setMode("supabase");
+          applyData(data.customers, data.orders);
+          return;
+        }
+      } catch {
+        // fall through to demo
+      }
+
+      setMode("demo");
+      applyData(await loadCustomers(), await loadOrders());
+    })();
   }, []);
 
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
@@ -64,6 +82,16 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </header>
+
+      {mode === "demo" && (
+        <div className="mb-8 border border-orwas-amber/40 bg-orwas-amber/10 px-5 py-4 text-sm text-orwas-ink">
+          <p className="font-medium">Browser demo mode</p>
+          <p className="mt-1 text-xs text-orwas-clay">
+            Add <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> to your environment and run{" "}
+            <span className="font-mono">supabase/schema.sql</span> to see real customers and orders.
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

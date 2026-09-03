@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { loginCustomer, setSession } from "@/lib/accounts";
 
 function LoginForm() {
@@ -21,13 +22,13 @@ function LoginForm() {
     setLoading(true);
     setMessage("");
 
-    const customer = loginCustomer(email, password);
+    const result = await loginCustomer(email, password);
 
-    if (customer) {
-      setSession(customer.email);
+    if (result.ok && result.customer) {
+      await setSession(result.customer.email);
       router.push(next);
     } else {
-      setMessage("Invalid email or password.");
+      setMessage(result.message || "Invalid email or password.");
       setLoading(false);
     }
   }
@@ -80,6 +81,16 @@ function LoginForm() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
+
+          <div className="mt-8 flex items-center gap-4">
+            <span className="h-px flex-1 bg-orwas-sand" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">or</span>
+            <span className="h-px flex-1 bg-orwas-sand" />
+          </div>
+
+          <div className="mt-8">
+            <GoogleSignInButton />
+          </div>
 
           <p className="mt-8 text-center text-xs text-orwas-clay">
             New to Orwa Sole Co.?{" "}

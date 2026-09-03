@@ -44,18 +44,17 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const freeShippingThreshold = 10000;
   const deliveryFee = total >= freeShippingThreshold ? 0 : 500;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-    const session = getSession();
+    const session = await getSession();
     if (!session) {
       // Keep the bag safe and ask the customer to sign in first
       window.sessionStorage.setItem("orwas-pending-order", JSON.stringify(cart));
       window.location.assign("/login?next=/orders");
       return;
     }
-    createOrder(
-      session.email,
-      session.name,
+    await createOrder(
+      session,
       cart.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity, image: item.image })),
     );
     clearCart();

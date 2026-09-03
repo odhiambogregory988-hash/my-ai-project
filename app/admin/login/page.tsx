@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -14,8 +15,9 @@ export default function AdminLoginPage() {
   useEffect(() => {
     const error = new URLSearchParams(window.location.search).get("error");
     if (error === "full") setMessage("The two admin places are already filled.");
-    if (error === "not-approved") setMessage("This account is not one of the two registered admins.");
+    if (error === "not-approved") setMessage("This Google account is not the registered admin. Use the admin email.");
     if (error === "invalid") setMessage("Invalid email or password.");
+    if (error === "google") setMessage("Google sign-in failed. Please try again.");
   }, []);
 
   async function handleLogin(e: React.FormEvent) {
@@ -77,6 +79,19 @@ export default function AdminLoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <div className="mt-8 flex items-center gap-4">
+          <span className="h-px flex-1 bg-orwas-cream/20" />
+          <span className="text-[10px] uppercase tracking-[0.2em] text-orwas-cream/40">or</span>
+          <span className="h-px flex-1 bg-orwas-cream/20" />
+        </div>
+
+        <div className="mt-8">
+          <GoogleSignInButton redirectTo="/admin/callback" dark />
+        </div>
+        <p className="mt-4 text-center text-xs text-orwas-cream/50">
+          Sign in with the Google account registered as the store admin.
+        </p>
 
         <Link href="/" className="mt-8 block text-center text-xs uppercase tracking-widest text-orwas-cream/60">Return to store</Link>
       </div>

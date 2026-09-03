@@ -2,19 +2,55 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatDate, loadCustomers, ordersFor, saveCustomers, Customer } from "@/lib/accounts";
+import { formatDate, loadCustomers, loadOrders, saveCustomers, Customer } from "@/lib/accounts";
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
+  const [mode, setMode] = useState<"supabase" | "demo">("supabase");
 
   useEffect(() => {
-    setCustomers(loadCustomers());
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/data");
+        const data = await res.json();
+        if (data.configured) {
+          setMode("supabase");
+          setCustomers(data.customers);
+          const counts: Record<string, number> = {};
+          for (const order of data.orders) {
+            counts[order.customerEmail] = (counts[order.customerEmail] ?? 0) + 1;
+          }
+          setOrderCounts(counts);
+          return;
+        }
+      } catch {
+        // fall through to demo
+      }
+      setMode("demo");
+      setCustomers(await loadCustomers());
+      const orders = await loadOrders();
+      const counts: Record<string, number> = {};
+      for (const order of orders) {
+        counts[order.customerEmail] = (counts[order.customerEmail] ?? 0) + 1;
+      }
+      setOrderCounts(counts);
+    })();
   }, []);
 
-  const removeCustomer = (id: string) => {
-    const next = customers.filter((c) => c.id !== id);
-    saveCustomers(next);
-    setCustomers(next);
+  const removeCustomer = async (id: string) => {
+    if (mode === "supabase") {
+      await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete-customer", id }),
+      });
+      setCustomers((prev) => prev.filter((c) => c.id !== id));
+    } else {
+      const next = customers.filter((c) => c.id !== id);
+      await saveCustomers(next);
+      setCustomers(next);
+    }
   };
 
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
@@ -33,6 +69,16 @@ export default function AdminCustomersPage() {
           </div>
         </div>
       </header>
+
+      {mode === "demo" && (
+        <div className="mb-8 border border-orwas-amber/40 bg-orwas-amber/10 px-5 py-4 text-sm text-orwas-ink">
+          <p className="font-medium">Browser demo mode</p>
+          <p className="mt-1 text-xs text-orwas-clay">
+            Add <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> to your environment and run{" "}
+            <span className="font-mono">supabase/schema.sql</span> to manage real customers.
+          </p>
+        </div>
+      )}
 
       {customers.length === 0 ? (
         <div className="rounded-sm border border-orwas-sand/60 bg-white px-8 py-16 text-center">
@@ -55,7 +101,7 @@ export default function AdminCustomersPage() {
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Orders</p>
-                    <p className="mt-1 font-display text-2xl text-orwas-ink">{ordersFor(customer.email).length}</p>
+                    <p className="mt-1 font-display text-2xl text-orwas-ink">{orderCounts[customer.email] ?? 0}</p>
                   </div>
                   <button
                     onClick={() => removeCustomer(customer.id)}

@@ -12,11 +12,12 @@ import {
   getSession,
   ordersFor,
   updateCustomer,
+  Customer,
 } from "@/lib/accounts";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [session, setSessionState] = useState<ReturnType<typeof getSession>>(null);
+  const [session, setSessionState] = useState<Customer | null>(null);
   const [ready, setReady] = useState(false);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -24,22 +25,24 @@ export default function DashboardPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
-    const customer = getSession();
-    if (!customer) {
-      router.replace("/login?next=/dashboard");
-      return;
-    }
-    setSessionState(customer);
-    setName(customer.name);
-    setAddress(customer.address);
-    setReady(true);
+    (async () => {
+      const customer = await getSession();
+      if (!customer) {
+        router.replace("/login?next=/dashboard");
+        return;
+      }
+      setSessionState(customer);
+      setName(customer.name);
+      setAddress(customer.address);
+      setOrderCount((await ordersFor(customer.email)).length);
+      setReady(true);
+    })();
   }, [router]);
 
   if (!ready || !session) return null;
-
-  const orders = ordersFor(session.email);
 
   return (
     <>
@@ -59,8 +62,8 @@ export default function DashboardPage() {
                 My orders
               </Link>
               <button
-                onClick={() => {
-                  clearSession();
+                onClick={async () => {
+                  await clearSession();
                   router.push("/");
                 }}
                 className="border border-orwas-clay/30 px-6 py-3 text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-orwas-ink hover:text-orwas-cream"
@@ -74,7 +77,7 @@ export default function DashboardPage() {
           <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3">
             <div className="rounded-sm border border-orwas-sand/60 bg-white p-6">
               <p className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Orders placed</p>
-              <p className="mt-2 font-display text-4xl">{orders.length}</p>
+              <p className="mt-2 font-display text-4xl">{orderCount}</p>
             </div>
             <div className="rounded-sm border border-orwas-sand/60 bg-white p-6">
               <p className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Member since</p>
@@ -94,9 +97,9 @@ export default function DashboardPage() {
 
               <form
                 className="mt-8 space-y-5"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  updateCustomer(session.id, { name, address });
+                  await updateCustomer(session.id, { name, address });
                   setSessionState({ ...session, name, address });
                   setSaved(true);
                   setTimeout(() => setSaved(false), 2500);
@@ -140,9 +143,9 @@ export default function DashboardPage() {
 
               <form
                 className="mt-8 space-y-5"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  const result = changePassword(session.id, currentPassword, newPassword);
+                  const result = await changePassword(session.id, currentPassword, newPassword);
                   setPasswordMessage(result.message || "Password updated.");
                   if (result.ok) {
                     setCurrentPassword("");

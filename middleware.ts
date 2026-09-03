@@ -2,7 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAdminTokenValid, cookieName } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === "/admin/login") return NextResponse.next();
+  if (request.nextUrl.pathname === "/admin/login" || request.nextUrl.pathname === "/admin/callback") {
+    return NextResponse.next();
+  }
 
   const token = request.cookies.get(cookieName)?.value;
   const isValid = await isAdminTokenValid(token);

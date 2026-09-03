@@ -34,15 +34,21 @@ export default function TrackPage() {
   const [query, setQuery] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
   const [searched, setSearched] = useState(false);
+  const [shipTo, setShipTo] = useState<{ name: string; address: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const found = findOrder(query);
+    const found = await findOrder(query);
     setOrder(found);
+    setShipTo(null);
+    if (found) {
+      const customers = await loadCustomers();
+      const customer = customers.find((c) => c.email === found.customerEmail);
+      if (customer?.address) setShipTo({ name: customer.name, address: customer.address });
+    }
     setSearched(true);
   };
 
-  const customer = order ? loadCustomers().find((c) => c.email === order.customerEmail) : null;
   const meta = order ? STATUS_META[order.status] : null;
 
   return (
@@ -149,8 +155,8 @@ export default function TrackPage() {
               <footer className="flex flex-col gap-4 border-t border-orwas-sand/60 bg-orwas-ivory/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xs text-orwas-clay">
                   <p>Subtotal {order.subtotal.toLocaleString()} KSh · Delivery {order.deliveryFee === 0 ? "Free" : `${order.deliveryFee.toLocaleString()} KSh`}</p>
-                  {customer?.address && (
-                    <p className="mt-1">Ship to: {customer.name}, {customer.address}</p>
+                  {shipTo && (
+                    <p className="mt-1">Ship to: {shipTo.name}, {shipTo.address}</p>
                   )}
                 </div>
                 <p className="font-display text-xl text-orwas-ink">Total {order.total.toLocaleString()} KSh</p>

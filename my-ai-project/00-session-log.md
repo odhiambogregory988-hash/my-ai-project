@@ -593,4 +593,58 @@ Track your progress across sessions.
 
 ---
 
+## Session 15 (continued) — September 3, 2026 — Supabase migration
+
+**What we did — replaced the browser demo with real Supabase:**
+- Auth now runs on **Supabase Auth** (sign up / sign in / sign out / change password)
+- `profiles` and `orders` **database tables** with Row Level Security
+- Orders, customer accounts, and tracking data now persist for every visitor
+- New `/api/admin/data` route (server-only, service role key) powers the admin dashboard/customers/orders pages
+- Public tracking now goes through a secure `track_order` SQL function (no raw table access)
+- **Safety net:** if Supabase isn't fully set up, the site automatically falls back to the browser demo so nothing breaks — admin pages show an amber "Browser demo mode" notice
+
+**Files changed:**
+- `lib/supabase.ts` — added admin client + `isSupabaseConfigured()`
+- `lib/accounts.ts` — rewritten: Supabase-first with demo fallback (all calls async)
+- `supabase/schema.sql` — NEW: tables, RLS policies, trigger, track_order RPC
+- `app/api/admin/data/route.ts` — NEW: admin data API (service role)
+- `app/register`, `app/login`, `app/dashboard`, `app/orders`, `app/track`, `components/CartDrawer.tsx` — async Supabase calls
+- `app/admin/*` — read real data via the API, fall back to demo
+- `.env.example` + `.env.local` — added `SUPABASE_SERVICE_ROLE_KEY`
+
+**To finish setup (2 steps):**
+1. Paste your **service role key** into `.env.local` → `SUPABASE_SERVICE_ROLE_KEY` (Supabase Dashboard → Settings → API → service_role)
+2. Run `supabase/admin_users.sql` then `supabase/schema.sql` in the SQL Editor
+3. (Optional) Disable email confirmation: Authentication → Providers → Email → Confirm email OFF, so sign-ups log in instantly
+
+---
+
+## Session 15 (continued) — September 3, 2026 — Google sign-in
+
+**What we did:**
+- Added "Continue with Google" button to `/login` and `/register`
+- New `components/GoogleSignInButton.tsx` — calls `supabase.auth.signInWithOAuth({ provider: "google" })`, redirects back to `/dashboard`, has a loading state, and hides itself when Supabase isn't configured
+- Button only appears once the Google provider is enabled in the Supabase dashboard
+
+**Follow-up (same session):**
+- User confirmed Google provider is now enabled in Supabase → button verified live (renders on `/login`, HTTP 200)
+- Fixed profile-name capture for OAuth signups: `supabase/schema.sql` trigger reads `full_name` first (Google's metadata field), then `name`, then empty
+- `getSession()` in `lib/accounts.ts` now upserts a missing profile row from auth metadata instead of showing a blank name (covers signups made before the trigger existed)
+- Note: `SUPABASE_SERVICE_ROLE_KEY` still missing from `.env.local` — only affects the admin data API, not Google sign-in
+
+**Follow-up (same session):**
+- Confirmed all auth paths guide customers to their home page `/dashboard`: email/password login (default `next` = `/dashboard`), register (pushes `/dashboard`), Google sign-in (redirects `/dashboard`)
+- New: when Supabase email confirmation is ON, the register page now shows a clear "Almost there!" panel with a "Go to sign in" button instead of a tiny alert, and explains they'll land on their customer home page after confirming
+- Redirect URL setup sheet saved to `my-ai-project/14-google-redirect-setup.md` (Supabase ref: `kgpkwapxntndsxmfzlgu`)
+
+**Follow-up (same session):**
+- Added Google sign-in for admins on `/admin/login` (dark variant of the shared button, sends OAuth to `/admin/callback`)
+- Rewrote `/admin/callback` (server route): exchanges the PKCE code server-side, verifies the Google email matches `ADMIN_EMAIL` in `.env.local`, then mints the admin JWT cookie and redirects to `/admin`; otherwise redirects back with `error=not-approved` / `error=google`
+- Extended `components/GoogleSignInButton.tsx` with `redirectTo` + `dark` props (customer flow unchanged, defaults to `/dashboard`)
+- `middleware.ts` now lets `/admin/callback` through without a token
+- Verified: typecheck + production build pass; button renders on `/admin/login`; `/admin/callback` without a code redirects to `/admin/login?error=invalid`
+- Requirement: the Google account used must be the same email as `ADMIN_EMAIL` in `.env.local`
+
+---
+
 *Update this after every session.*
