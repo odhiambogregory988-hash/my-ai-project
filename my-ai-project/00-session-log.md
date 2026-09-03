@@ -645,6 +645,104 @@ Track your progress across sessions.
 - Verified: typecheck + production build pass; button renders on `/admin/login`; `/admin/callback` without a code redirects to `/admin/login?error=invalid`
 - Requirement: the Google account used must be the same email as `ADMIN_EMAIL` in `.env.local`
 
+**Follow-up (same session):**
+- Dashboard sign-out now sends the customer to `/login` (where Google sign-in is available) instead of the store home
+- Added a "Switch account" button on `/dashboard` (only when Supabase is configured): signs out, then triggers Google OAuth with `prompt=select_account` so the user can pick a different Google account and land back on the dashboard
+- Verified: typecheck passes, `/dashboard` serves 200
+
+**Follow-up (same session):**
+- Made the email-confirmation flow work end-to-end:
+  - New `resendConfirmationEmail()` in `lib/accounts.ts` (`supabase.auth.resend({ type: "signup", email })`)
+  - Login page: shows a "Resend confirmation email" button when a user tries to sign in before confirming; explains expired links via `?confirmed=error`
+  - Register page "Almost there!" panel: added its own resend button
+  - Dashboard: a leftover `?code=` (failed exchange — expired link, different browser) now redirects to `/login?confirmed=error` with an explanation instead of a silent bounce
+- Note for user: confirmation emails are sent by Supabase automatically; check spam + the 2-emails/hour free-tier rate limit; can also disable confirmation in the Supabase dashboard for instant sign-ups
+
+**Follow-up (same session):**
+- Added `components/AnnouncementBar.tsx` — premium rotating storefront bar (ink background, gold edge + ✦ accents, smooth framer-motion crossfade every 4.5s)
+- Rotates three messages: free delivery over KSh 10,000 / new Clarks Heritage Drop / crafted-in-Kenya tagline
+- Mounted on the home page above the Header; typecheck passes, home serves 200 with the banner text
+
+**Follow-up (same session):**
+- Dashboard now greets the customer by time of day (Claude-style): Good morning / afternoon / evening / night + first name, with a matching one-line note under the heading (e.g. "A fresh start for today's steps.")
+- Works the same for Google and email sign-ins (greeting is computed from the visitor's local time on the dashboard); typecheck passes, dashboard serves 200
+- Same time-based greeting added to the admin dashboard header ("Good morning. Ready to run the store today?" etc.) with admin-flavored notes; typecheck passes
+
+**Follow-up (same session):**
+- Customer management now always shows the name customers signed in with:
+  - Admin API (`/api/admin/data`) falls back to the auth user's `full_name`/`name` metadata when the profile name is empty (older signups, pre-trigger-fix)
+  - Added `provider` ("google" | "email") to each customer; the customers page shows a gold "Signed in with Google" or neutral "Signed in with email" tag next to the name
+  - Added idempotent backfill UPDATE to `supabase/schema.sql` that copies sign-in names into empty profile names
+  - `Customer` type gained optional `provider` field; typecheck passes
+
+**Follow-up (same session):**
+- Added a unique **profile photo** feature:
+  - `profiles.avatar_url` column + public `avatars` storage bucket with RLS policies in `supabase/schema.sql`
+  - `Customer.avatarUrl` + `mapCustomer`/`getSession`/`loginCustomer` read it; Google users fall back to Google's own avatar (`user_metadata.avatar_url`) until they upload
+  - New `updateCustomerAvatar()` (Supabase profile update, demo no-op)
+  - Dashboard: circular avatar (gold ring) beside the greeting with elegant initials fallback (e.g. "JD"), plus a **Profile photo** card with an upload button → Supabase Storage → live preview
+  - Admin customer list: avatar thumbnail + initials next to each customer name
+  - Verified: typecheck passes; dashboard 200, admin/customers auth-gated 307
+
+**Follow-up (same session):**
+- Redesigned the customer dashboard horizontally with the name always visible:
+  - Dark hero band at top: avatar + "Good morning, {name}." — name now falls back to the email prefix when the profile name is empty (was showing a blank greeting)
+  - Content cards overlap upward over the hero (negative margin, layered shadow)
+  - **Recent orders** now live on the dashboard in a horizontal row of cards (image, order no, status badge, total) — stats → orders → profile sections follow each other top to bottom, each laid out horizontally
+  - Profile photo | Profile details | Security now sit side by side in one horizontal row (lg:grid-cols-3)
+  - Verified: typecheck passes, dashboard serves 200
+
+**Follow-up (same session):**
+- Admin access is now email-based instead of the env credential gate:
+  - `supabase/admin_users.sql` rewritten: roster keyed by email, owner seeded (`odhiambogregory988@gmail.com`), `is_admin(user_id)` joins auth.users by email, RLS lets admins view/add and remove non-owner admins
+  - `/admin/callback` (Google) now checks the roster via `is_admin` RPC; `/api/admin/login` verifies via Supabase email/password + roster (env fallback when unconfigured)
+  - New `/api/admin/admins` API (list for admins, add/remove owner-only) and `/admin/admins` page with an "Add admin" form, owner badge, and remove buttons; linked from the admin dashboard
+  - `/api/admin/data` now falls back to the Google admin's own session + RLS (new `get_customers()` helper, admin order policies) when the service role key is missing — admin panel shows real data after Google sign-in without the key
+  - `.env.example` gained `ADMIN_OWNER_EMAIL`; login error texts updated
+  - Verified: typecheck passes; routes respond correctly (admin/admins 307 gate, APIs 401 without token, login 200)
+
+**Follow-up (same session):**
+- "Create an admin account with Google" now works: `claim_owner()` function added to `supabase/admin_users.sql` — the first Google sign-in with the owner email auto-creates the admin account (id + email), no seeding needed
+- `/admin/callback` tries `claim_owner` when the roster check fails, then re-checks `is_admin`; non-owner Google accounts still get turned away
+- Admin login page explains the flow: email+password only works for accounts registered on the site first; the owner email auto-creates its admin account via Google
+- Verified: typecheck passes, login page serves with the new guidance
+
+**Follow-up (same session):**
+- Root cause of the user's repeated "Invalid email or password": they were using the email/password form, but admin auth is Google-based and their Gmail has no site password
+- Admin login page redesigned Google-first: the big "Continue with Google" button is now the primary action; the email+password form is hidden behind a small "Sign in with email + password instead" toggle with a clear note that it only works for accounts registered on the site first
+- `/api/admin/login` now returns "No password account found for this email. Use Continue with Google…" instead of the misleading generic error
+- Verified: typecheck passes; both the Google button and the collapsed form render
+
+**Follow-up (same session):**
+- Admin login rebuilt like a standard website: email + password **Sign In** is primary, with a **"New admin? Create account"** toggle (email, password, confirm) that signs the user up via Supabase and mints the admin session if the email is on the roster
+- Handles email confirmation ("check your email"), already-registered emails, password mismatch, and non-roster signups with clear messages
+- Google remains as a secondary "or continue with Google" option; verified typecheck + all form elements render
+
+**Follow-up (same session):**
+- Fixed the owner being locked out: `ADMIN_OWNER_EMAIL` + `isOwnerEmail()` added to `lib/auth.ts` — the owner email is now recognized in code (no roster/SQL dependency) in both `/api/admin/login` and `/admin/callback`; `/api/admin/admins` reuses the shared constant
+- Fixed the email-confirmation redirect: admin sign-up now points `emailRedirectTo` to `/admin/login?confirmed=ok` (a simple "Email confirmed ✓ sign in now" message) instead of the OAuth callback, so it works from any browser/device
+- Note for the user: the confirmation link redirects to `localhost:3000`, which only works on the PC where they created the account — a phone can't reach the PC's localhost; confirm from the PC or deploy later
+
+**Follow-up (same session):**
+- "Add it" (kill the Browser demo mode banner):
+  - `/api/admin/data` session path now recognizes the owner via `isOwnerEmail` (not only the roster)
+  - `/api/admin/login` now forwards the Supabase session cookies to the browser on email/password login, so the admin data API can use the session path instead of requiring the service role key
+  - `.env.local` has the empty `SUPABASE_SERVICE_ROLE_KEY=` placeholder ready for the user to paste (project ref `kgpkwapxntndsxmfzlgu`)
+  - Still required from the user (dashboard-only, cannot be done from code): run `supabase/admin_users.sql` + `supabase/schema.sql` in the Supabase SQL Editor (tables/RLS must exist), and optionally paste the service role key
+
+---
+
+**Follow-up (same session) — sign-in link validation + demo banner:**
+- Verified live: the admin data API returns `configured: true` — the service role key + schema are working; the demo banner clears on refresh
+- Root cause of "That sign-in link was not valid": the admin Google flow redirected to `/admin/callback`, a **server** route doing a server-side PKCE code exchange, but the code verifier lives in the browser — so validation failed and it bounced to `/admin/login?error=invalid`
+- Fixes:
+  - Replaced `app/admin/callback/route.ts` with a **client** page (`page.tsx`) that validates the code in the browser (like the customer `/dashboard` flow) via the auto-exchanging browser client, then mints the admin JWT through a new `POST /api/admin/session` route
+  - `POST /api/admin/session` verifies the Supabase session from cookies, checks owner/roster/claim, and sets the `orwas-admin-session` cookie
+  - `/admin/login` now also auto-validates any `?code=` in the URL (email-confirmation links land here) and completes sign-in without re-entering the password
+  - Softer error text on `/admin/login` for expired/invalid links
+- Account mismatch fix: the user signs in with `odhiambogregory985@gmail.com`, which was missing from the admin roster (only `988` was seeded) — added `985` to the live roster and to `supabase/admin_users.sql` so either account can sign in
+- Verified: typecheck passes, `/admin/login` + `/admin/callback` serve 200, `/api/admin/data` returns `configured: true` with a valid admin cookie
+
 ---
 
 *Update this after every session.*

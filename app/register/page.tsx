@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import { registerCustomer, setSession } from "@/lib/accounts";
+import { registerCustomer, resendConfirmationEmail, setSession } from "@/lib/accounts";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +16,8 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [resending, setResending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,12 +61,28 @@ export default function RegisterPage() {
                 Once you confirm, signing in will take you straight to your
                 customer home page.
               </p>
-              <Link
-                href="/login"
-                className="mt-6 inline-block bg-orwas-ink px-8 py-3 text-[10px] uppercase tracking-[0.25em] text-orwas-cream transition-colors hover:bg-orwas-stone"
-              >
-                Go to sign in
-              </Link>
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <Link
+                  href="/login"
+                  className="inline-block bg-orwas-ink px-8 py-3 text-[10px] uppercase tracking-[0.25em] text-orwas-cream transition-colors hover:bg-orwas-stone"
+                >
+                  Go to sign in
+                </Link>
+                <button
+                  type="button"
+                  disabled={resending}
+                  onClick={async () => {
+                    setResending(true);
+                    const result = await resendConfirmationEmail(email);
+                    setResendMessage(result.message || "");
+                    setResending(false);
+                  }}
+                  className="border border-orwas-ink/40 px-6 py-3 text-[10px] uppercase tracking-[0.2em] text-orwas-ink transition-colors hover:bg-orwas-ink hover:text-orwas-cream disabled:opacity-50"
+                >
+                  {resending ? "Sending…" : "Resend confirmation email"}
+                </button>
+              </div>
+              {resendMessage && <p className="mt-4 text-xs text-orwas-clay">{resendMessage}</p>}
             </div>
           ) : (
             <>

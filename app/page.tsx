@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import VideoShowcase from "@/components/VideoShowcase";
 import Editorial from "@/components/Editorial";
 import Marquee from "@/components/Marquee";
@@ -10,6 +11,7 @@ import Footer from "@/components/Footer";
 export default function HomePage() {
   return (
     <>
+      <AnnouncementBar />
       <Header />
       <main>
         <VideoShowcase />

@@ -6,16 +6,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import { loginCustomer, setSession } from "@/lib/accounts";
+import { loginCustomer, resendConfirmationEmail, setSession } from "@/lib/accounts";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dashboard";
+  const confirmationFailed = searchParams.get("confirmed") === "error";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    confirmationFailed
+      ? "We couldn't complete your confirmation — the link may be expired. Sign in below, or resend a new confirmation email."
+      : "",
+  );
+  const [resendMessage, setResendMessage] = useState("");
+  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Show the resend option when the error is about confirming the email.
+  const needsConfirmation = message.toLowerCase().includes("confirm your email");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +58,26 @@ function LoginForm() {
             <p role="alert" className="mt-6 border border-orwas-amber/40 bg-orwas-amber/10 px-4 py-3 text-sm text-orwas-ink">
               {message}
             </p>
+          )}
+
+          {needsConfirmation && (
+            <div className="mt-4 border border-orwas-sand bg-white p-4">
+              <p className="text-xs text-orwas-clay">Didn't get the email, or did it expire?</p>
+              <button
+                type="button"
+                disabled={resending}
+                onClick={async () => {
+                  setResending(true);
+                  const result = await resendConfirmationEmail(email);
+                  setResendMessage(result.message || "");
+                  setResending(false);
+                }}
+                className="mt-3 border border-orwas-ink px-5 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-orwas-ink hover:text-orwas-cream disabled:opacity-50"
+              >
+                {resending ? "Sending…" : "Resend confirmation email"}
+              </button>
+              {resendMessage && <p className="mt-3 text-xs text-orwas-clay">{resendMessage}</p>}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">

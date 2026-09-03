@@ -92,7 +92,29 @@ export default function AdminCustomersPage() {
               {customers.map((customer) => (
                 <div key={customer.id} className="grid grid-cols-[1.6fr_1.2fr_1fr_auto] items-center gap-4 border-b border-orwas-sand/50 px-5 py-5 last:border-b-0">
                   <div className="min-w-0">
-                    <p className="font-display text-xl text-orwas-ink">{customer.name}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-orwas-sand bg-orwas-mist">
+                        {customer.avatarUrl ? (
+                          <img src={customer.avatarUrl} alt={customer.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs font-medium text-orwas-clay">
+                            {(customer.name.trim().match(/\b\w/g) ?? []).slice(0, 2).join("").toUpperCase() || "OS"}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-display text-xl text-orwas-ink">{customer.name}</p>
+                      </div>
+                      <span
+                        className={`border px-2 py-0.5 text-[9px] uppercase tracking-[0.15em] ${
+                          customer.provider === "google"
+                            ? "border-orwas-amber/40 bg-orwas-amber/15 text-orwas-ink"
+                            : "border-orwas-sand bg-orwas-mist text-orwas-clay"
+                        }`}
+                      >
+                        {customer.provider === "google" ? "Signed in with Google" : "Signed in with email"}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs text-orwas-clay">Member since {formatDate(customer.createdAt)}</p>
                   </div>
                   <div className="min-w-0">

@@ -12,8 +12,12 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text not null default '',
   address text not null default '',
+  avatar_url text not null default '',
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run: adds the column if an older schema is already applied.
+alter table public.profiles add column if not exists avatar_url text not null default '';
 
 -- Auto-create a profile when someone signs up
 create or replace function public.handle_new_user()
@@ -98,6 +102,10 @@ drop policy if exists "admins update orders" on public.orders;
 create policy "admins update orders" on public.orders
   for update using (public.is_admin(auth.uid()));
 
+drop policy if exists "admins delete orders" on public.orders;
+create policy "admins delete orders" on public.orders
+  for delete using (public.is_admin(auth.uid()));
+
 drop policy if exists "admins read all profiles" on public.profiles;
 create policy "admins read all profiles" on public.profiles
   for select using (public.is_admin(auth.uid()));
@@ -131,6 +139,77 @@ $$;
 revoke all on function public.track_order(text) from public;
 grant execute on function public.track_order(text) to anon, authenticated;
 
+-- Admin-only customer list (joins auth users for the email). Returns
+-- nothing when the caller is not on the admin roster.
+create or replace function public.get_customers()
+returns table (
+  id uuid,
+  email text,
+  name text,
+  address text,
+  avatar_url text,
+  provider text,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select
+    p.id,
+    u.email,
+    p.name,
+    p.address,
+    p.avatar_url,
+    u.raw_app_meta_data->>'provider',
+    p.created_at
+  from public.profiles p
+  join auth.users u on u.id = p.id
+  where public.is_admin(auth.uid())
+  order by p.created_at desc;
+$$;
+
+revoke all on function public.get_customers() from public;
+grant execute on function public.get_customers() to authenticated;
+
+-- ------------------------------------------------------------
+-- 4c. Profile photos (Supabase Storage bucket)
+-- ------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "avatars public read" on storage.objects;
+create policy "avatars public read" on storage.objects
+  for select using (bucket_id = 'avatars');
+
+drop policy if exists "avatars authenticated upload" on storage.objects;
+create policy "avatars authenticated upload" on storage.objects
+  for insert with check (bucket_id = 'avatars' and auth.role() = 'authenticated');
+
+drop policy if exists "avatars own update" on storage.objects;
+create policy "avatars own update" on storage.objects
+  for update using (bucket_id = 'avatars' and auth.uid() = owner);
+
+drop policy if exists "avatars own delete" on storage.objects;
+create policy "avatars own delete" on storage.objects
+  for delete using (bucket_id = 'avatars' and auth.uid() = owner);
+
 -- Useful index for order lookups
 create index if not exists orders_order_no_idx on public.orders (order_no);
 create index if not exists orders_user_id_idx on public.orders (user_id);
+
+-- ------------------------------------------------------------
+-- 4b. Backfill: copy the name customers signed in with into
+--     profiles where it's still empty (older signups).
+-- ------------------------------------------------------------
+update public.profiles p
+set name = coalesce(
+  u.raw_user_meta_data->>'full_name',
+  u.raw_user_meta_data->>'name',
+  ''
+)
+from auth.users u
+where p.id = u.id
+  and p.name = '';

@@ -21,6 +21,11 @@ const SECTIONS = [
     label: "Order management",
     description: "Track every order and update shipping status.",
   },
+  {
+    href: "/admin/admins",
+    label: "Admin management",
+    description: "Add and remove admin emails. Only the owner can manage this list.",
+  },
 ];
 
 export default function AdminDashboardPage() {
@@ -59,6 +64,25 @@ export default function AdminDashboardPage() {
     })();
   }, []);
 
+  // Time-of-day greeting — same touch as the customer dashboard.
+  const hour = new Date().getHours();
+  const greeting =
+    hour >= 5 && hour < 12
+      ? "Good morning"
+      : hour >= 12 && hour < 17
+        ? "Good afternoon"
+        : hour >= 17 && hour < 21
+          ? "Good evening"
+          : "Good night";
+  const greetingNote =
+    hour >= 5 && hour < 12
+      ? "Ready to run the store today?"
+      : hour >= 12 && hour < 17
+        ? "Orders are moving — keep an eye on them."
+        : hour >= 17 && hour < 21
+          ? "Wrapping up the day's orders?"
+          : "Running the store after hours?";
+
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
 
   const statCards = [
@@ -75,6 +99,9 @@ export default function AdminDashboardPage() {
           <div>
             <p className="mb-2 text-xs uppercase tracking-[0.24em] text-orwas-clay">Orwa Sole Co. / Admin</p>
             <h1 className="font-display text-4xl md:text-5xl">Admin dashboard</h1>
+            <p className="mt-2 text-sm text-orwas-clay">
+              {greeting}. {greetingNote}
+            </p>
           </div>
           <div className="flex items-center gap-5">
             <button onClick={logout} className="text-xs uppercase tracking-[0.2em] text-orwas-clay transition-colors hover:text-orwas-ink">Sign out</button>
@@ -104,7 +131,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Management sections */}
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
+      <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {SECTIONS.map((section) => (
           <Link
             key={section.href}

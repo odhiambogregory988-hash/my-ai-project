@@ -1,5 +1,14 @@
 import { SignJWT, jwtVerify } from "jose";
 
+/** The owner email — always has admin rights, no roster row needed. */
+export const ADMIN_OWNER_EMAIL = (
+  process.env.ADMIN_OWNER_EMAIL || "odhiambogregory988@gmail.com"
+).toLowerCase();
+
+export function isOwnerEmail(email?: string | null) {
+  return !!email && email.toLowerCase() === ADMIN_OWNER_EMAIL;
+}
+
 const cookieName = "orwas-admin-session";
 const secret = new TextEncoder().encode(process.env.ADMIN_SESSION_SECRET || "");
 

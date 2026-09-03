@@ -11,6 +11,10 @@ export interface Customer {
   email: string;
   address: string;
   createdAt: string;
+  /** "google" | "email" — how the customer signed in (Supabase mode only). */
+  provider?: string;
+  /** Profile photo URL (Supabase Storage or Google avatar). */
+  avatarUrl?: string;
 }
 
 export type OrderStatus = "Processing" | "Shipped" | "Delivered" | "Cancelled";
@@ -70,8 +74,15 @@ function mapOrderRow(row: OrderRow): Order {
   };
 }
 
-function mapCustomer(id: string, email: string, name: string, address: string, createdAt: string): Customer {
-  return { id, email, name, address, createdAt };
+function mapCustomer(
+  id: string,
+  email: string,
+  name: string,
+  address: string,
+  createdAt: string,
+  avatarUrl = "",
+): Customer {
+  return { id, email, name, address, createdAt, avatarUrl };
 }
 
 /* ============================================================
@@ -240,6 +251,14 @@ export async function registerCustomer(name: string, email: string, password: st
   };
 }
 
+export async function resendConfirmationEmail(email: string) {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Nothing to resend in demo mode — just sign in." };
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Confirmation email sent — check your inbox (and spam)." };
+}
+
 export async function loginCustomer(email: string, password: string) {
   if (!isSupabaseConfigured()) {
     const customer = demoLogin(email, password);
@@ -259,7 +278,7 @@ export async function loginCustomer(email: string, password: string) {
   const user = data.user;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name,address")
+    .select("name,address,avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -271,6 +290,7 @@ export async function loginCustomer(email: string, password: string) {
       profile?.name ?? "",
       profile?.address ?? "",
       user.created_at,
+      profile?.avatar_url ?? "",
     ),
   };
 }
@@ -302,7 +322,7 @@ export async function getSession(): Promise<Customer | null> {
 
   let { data: profile } = await supabase
     .from("profiles")
-    .select("name,address")
+    .select("name,address,avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -314,18 +334,26 @@ export async function getSession(): Promise<Customer | null> {
     const { data: inserted } = await supabase
       .from("profiles")
       .upsert({ id: user.id, name: fallbackName })
-      .select("name,address")
+      .select("name,address,avatar_url")
       .maybeSingle();
     profile = inserted ?? null;
   }
 
-  return mapCustomer(
+  const customer = mapCustomer(
     user.id,
     user.email ?? "",
     profile?.name ?? "",
     profile?.address ?? "",
     user.created_at,
+    profile?.avatar_url ?? "",
   );
+
+  // Google users: fall back to Google's own avatar until they upload one.
+  if (!customer.avatarUrl && typeof user.user_metadata?.avatar_url === "string") {
+    customer.avatarUrl = user.user_metadata.avatar_url;
+  }
+
+  return customer;
 }
 
 export async function updateCustomer(id: string, patch: Partial<Customer>) {
@@ -340,6 +368,17 @@ export async function updateCustomer(id: string, patch: Partial<Customer>) {
     },
     () => demoUpdateCustomer(id, patch),
   );
+}
+
+export async function updateCustomerAvatar(id: string, avatarUrl: string) {
+  if (!isSupabaseConfigured()) return { ok: true }; // demo has no avatar storage
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
 }
 
 export async function changePassword(id: string, current: string, nextPassword: string) {
