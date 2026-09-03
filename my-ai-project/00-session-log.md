@@ -581,4 +581,16 @@ Track your progress across sessions.
 
 ---
 
+## Session 15 (continued) — September 3, 2026
+
+**What we did — public order tracking page:**
+- Added `/track` — anyone can enter an order number (e.g. ORW-…) to see delivery status
+- Shows status note, Processing → Shipped → Delivered timeline, items with photos, totals, and shipping address
+- Friendly "Order not found" state with hints
+- Added `findOrder()` helper to `lib/accounts.ts`
+- Linked from Footer ("Order Tracking") and Orders page ("Track by order number")
+- Typecheck ✅ and production build ✅ — 14 routes total
+
+---
+
 *Update this after every session.*

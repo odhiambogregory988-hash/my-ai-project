@@ -65,12 +65,20 @@ function OrdersContent() {
               <p className="mb-3 text-xs uppercase tracking-[0.25em] text-orwas-amber">Order history</p>
               <h1 className="font-display text-5xl md:text-6xl">Your orders.</h1>
             </div>
-            <Link
-              href="/collections"
-              className="border border-orwas-clay/30 px-6 py-3 text-center text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-orwas-ink hover:text-orwas-cream"
-            >
-              Continue shopping
-            </Link>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/track"
+                className="border border-orwas-clay/30 px-6 py-3 text-center text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-orwas-ink hover:text-orwas-cream"
+              >
+                Track by order number
+              </Link>
+              <Link
+                href="/collections"
+                className="border border-orwas-clay/30 px-6 py-3 text-center text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-orwas-ink hover:text-orwas-cream"
+              >
+                Continue shopping
+              </Link>
+            </div>
           </div>
 
           {placed && (

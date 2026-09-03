@@ -184,6 +184,11 @@ export function ordersFor(customerEmail: string) {
   return loadOrders().filter((o) => o.customerEmail.toLowerCase() === customerEmail.toLowerCase());
 }
 
+export function findOrder(id: string) {
+  const normalized = id.trim().toUpperCase();
+  return loadOrders().find((o) => o.id.toUpperCase() === normalized) ?? null;
+}
+
 export function updateOrderStatus(id: string, status: OrderStatus) {
   saveOrders(loadOrders().map((o) => (o.id === id ? { ...o, status } : o)));
 }

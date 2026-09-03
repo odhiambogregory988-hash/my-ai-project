@@ -12,7 +12,7 @@ const FOOTER_LINKS = {
     { label: "Our Story", href: "/about" },
     { label: "Journal", href: "/journal" },
     { label: "My Account", href: "/dashboard" },
-    { label: "Order Tracking", href: "/orders" },
+    { label: "Order Tracking", href: "/track" },
     { label: "Admin", href: "/admin" },
   ],
   Support: [
