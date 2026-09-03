@@ -2,6 +2,7 @@
 
 import { formatPrice } from "@/lib/store";
 import { useStore } from "@/components/StoreProvider";
+import { createOrder, getSession } from "@/lib/accounts";
 
 const COMPLETE_YOUR_LOOK = [
   {
@@ -37,11 +38,30 @@ const COMPLETE_YOUR_LOOK = [
 ];
 
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { cart, locale, currency, updateQuantity, removeFromCart, addToCart } = useStore();
+  const { cart, locale, currency, updateQuantity, removeFromCart, addToCart, clearCart } = useStore();
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const freeShippingThreshold = 10000;
   const deliveryFee = total >= freeShippingThreshold ? 0 : 500;
+
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+    const session = getSession();
+    if (!session) {
+      // Keep the bag safe and ask the customer to sign in first
+      window.sessionStorage.setItem("orwas-pending-order", JSON.stringify(cart));
+      window.location.assign("/login?next=/orders");
+      return;
+    }
+    createOrder(
+      session.email,
+      session.name,
+      cart.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity, image: item.image })),
+    );
+    clearCart();
+    onClose();
+    window.location.assign("/orders?placed=1");
+  };
 
   return (
     <div className={`fixed inset-0 z-[60] transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
@@ -49,17 +69,17 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       <button
         aria-label="Close cart"
         onClick={onClose}
-        className="absolute inset-0 bg-black transition-opacity duration-500"
-        style={{ opacity: open ? 0.85 : 0 }}
+        className="absolute inset-0 bg-[#0B1220] transition-opacity duration-500"
+        style={{ opacity: open ? 1 : 0 }}
       />
 
       {/* Cart Panel — luxury fashion drawer */}
       <aside
-        className={`absolute right-0 top-0 h-full w-full max-w-[440px] text-orwas-ink transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col ${open ? "translate-x-0" : "translate-x-full"}`}
-        style={{ backgroundColor: "#faf9f7", borderLeft: "1px solid rgba(26,23,20,0.06)" }}
+        className={`absolute right-0 top-0 h-full w-full max-w-[440px] text-orwas-ink transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col shadow-[0_0_0_1px_rgba(17,24,39,0.04),-20px_0_40px_rgba(17,24,39,0.18)] ${open ? "translate-x-0" : "translate-x-full"}`}
+        style={{ backgroundColor: "#FFFFFF", borderLeft: "1px solid rgba(17,24,39,0.08)" }}
       >
         {/* Header — editorial style */}
-        <div className="px-6 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(26,23,20,0.08)" }}>
+        <div className="px-6 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(17,24,39,0.08)" }}>
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[9px] uppercase tracking-[0.35em] text-orwas-amber mb-1 font-medium">Your Selection</p>
@@ -69,8 +89,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               onClick={onClose}
               aria-label="Close cart"
               className="w-9 h-9 flex items-center justify-center rounded-full transition-colors duration-300"
-              style={{ border: "1px solid rgba(26,23,20,0.12)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(26,23,20,0.05)"; }}
+              style={{ border: "1px solid rgba(17,24,39,0.12)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(17,24,39,0.05)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               <svg className="w-4 h-4 text-orwas-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +107,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
         {/* Free shipping whisper */}
         {cart.length > 0 && (
-          <div className="px-6 py-3" style={{ borderBottom: "1px solid rgba(26,23,20,0.04)" }}>
+          <div className="px-6 py-3" style={{ borderBottom: "1px solid rgba(17,24,39,0.04)" }}>
             {total >= freeShippingThreshold ? (
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -116,7 +136,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         {cart.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-8">
             {/* Empty state — editorial */}
-            <div className="w-16 h-16 mb-8" style={{ border: "1px solid rgba(26,23,20,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="w-16 h-16 mb-8" style={{ border: "1px solid rgba(17,24,39,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg className="w-6 h-6 text-orwas-clay" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
@@ -129,8 +149,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             <button
               onClick={onClose}
               className="px-8 py-3 text-[10px] uppercase tracking-[0.25em] text-orwas-ink transition-colors duration-300"
-              style={{ border: "1px solid rgba(26,23,20,0.2)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(26,23,20,0.05)"; }}
+              style={{ border: "1px solid rgba(17,24,39,0.2)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(17,24,39,0.05)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               Explore Collection
@@ -146,11 +166,11 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                     key={item.id}
                     className="flex gap-5 px-6 py-5 transition-colors duration-300"
                     style={{
-                      borderBottom: index < cart.length - 1 ? "1px solid rgba(26,23,20,0.05)" : "1px solid rgba(26,23,20,0.08)",
+                      borderBottom: index < cart.length - 1 ? "1px solid rgba(17,24,39,0.05)" : "1px solid rgba(17,24,39,0.08)",
                     }}
                   >
                     {/* Image — fashion card style */}
-                    <div className="relative h-28 w-24 shrink-0 overflow-hidden" style={{ backgroundColor: "rgba(212,197,178,0.15)" }}>
+                    <div className="relative h-28 w-24 shrink-0 overflow-hidden" style={{ backgroundColor: "rgba(17,24,39,0.05)" }}>
                       {item.image ? (
                         <img
                           src={item.image}
@@ -202,7 +222,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                         </p>
 
                         {/* Quantity — minimal inline */}
-                        <div className="flex items-center" style={{ border: "1px solid rgba(26,23,20,0.1)", borderRadius: "2px" }}>
+                        <div className="flex items-center" style={{ border: "1px solid rgba(17,24,39,0.1)", borderRadius: "2px" }}>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
@@ -212,7 +232,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                             </svg>
                           </button>
-                          <span className="w-8 h-7 flex items-center justify-center text-[11px] font-medium text-orwas-ink" style={{ borderLeft: "1px solid rgba(26,23,20,0.08)", borderRight: "1px solid rgba(26,23,20,0.08)" }}>
+                          <span className="w-8 h-7 flex items-center justify-center text-[11px] font-medium text-orwas-ink" style={{ borderLeft: "1px solid rgba(17,24,39,0.08)", borderRight: "1px solid rgba(17,24,39,0.08)" }}>
                             {item.quantity}
                           </span>
                           <button
@@ -231,7 +251,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               </div>
 
               {/* Complete Your Look — editorial upsell */}
-              <div className="px-6 py-6" style={{ borderTop: "1px solid rgba(26,23,20,0.06)" }}>
+              <div className="px-6 py-6" style={{ borderTop: "1px solid rgba(17,24,39,0.06)" }}>
                 <p className="text-[9px] uppercase tracking-[0.35em] text-orwas-amber mb-4 font-medium">Complete Your Look</p>
                 <div className="flex gap-4">
                   {COMPLETE_YOUR_LOOK.map((product) => (
@@ -240,7 +260,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                       onClick={() => addToCart(product)}
                       className="flex-shrink-0 w-[100px] group text-left"
                     >
-                      <div className="aspect-[3/4] overflow-hidden mb-2" style={{ backgroundColor: "rgba(212,197,178,0.15)" }}>
+                      <div className="aspect-[3/4] overflow-hidden mb-2" style={{ backgroundColor: "rgba(17,24,39,0.05)" }}>
                         <img
                           src={product.image}
                           alt={product.name}
@@ -256,7 +276,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             </div>
 
             {/* Footer — editorial checkout */}
-            <div style={{ borderTop: "1px solid rgba(26,23,20,0.08)" }}>
+            <div style={{ borderTop: "1px solid rgba(17,24,39,0.08)" }}>
               {/* Summary */}
               <div className="px-6 py-5 space-y-3">
                 <div className="flex justify-between">
@@ -269,7 +289,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                     {deliveryFee === 0 ? "Complimentary" : formatPrice(deliveryFee, locale, currency)}
                   </span>
                 </div>
-                <div className="flex justify-between pt-3" style={{ borderTop: "1px solid rgba(26,23,20,0.08)" }}>
+                <div className="flex justify-between pt-3" style={{ borderTop: "1px solid rgba(17,24,39,0.08)" }}>
                   <span className="text-[10px] uppercase tracking-[0.2em] text-orwas-ink font-medium">Total</span>
                   <span className="text-base font-display text-orwas-ink">{formatPrice(total + deliveryFee, locale, currency)}</span>
                 </div>
@@ -278,9 +298,10 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               {/* Checkout */}
               <div className="px-6 pb-2">
                 <button
+                  onClick={handleCheckout}
                   className="w-full py-4 text-[10px] uppercase tracking-[0.3em] text-orwas-cream transition-all duration-300"
                   style={{ backgroundColor: "var(--color-ink)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(140,123,107,1)"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-clay)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--color-ink)"; }}
                 >
                   Proceed to Checkout

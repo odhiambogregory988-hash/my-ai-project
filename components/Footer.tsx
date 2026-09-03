@@ -11,6 +11,8 @@ const FOOTER_LINKS = {
   Company: [
     { label: "Our Story", href: "/about" },
     { label: "Journal", href: "/journal" },
+    { label: "My Account", href: "/dashboard" },
+    { label: "Order Tracking", href: "/orders" },
     { label: "Admin", href: "/admin" },
   ],
   Support: [
@@ -29,9 +31,12 @@ export default function Footer() {
           <span className="font-display text-2xl tracking-[0.08em]">
             ORWAS
           </span>
+          <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-orwas-amber">
+            Orwa Sole Co.
+          </p>
           <p className="mt-4 text-orwas-clay text-sm leading-relaxed max-w-xs">
-            Curated collections of timeless craft. Where heritage meets the
-            contemporary.
+            Premium footwear and considered apparel, crafted to endure. Where
+            heritage meets the contemporary.
           </p>
         </div>
 
@@ -87,7 +92,7 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="mt-10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-orwas-clay/50">
-        <p>© {new Date().getFullYear()} Orwas. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Orwa Sole Co. All rights reserved.</p>
         <div className="flex gap-6">
           <Link href="/privacy" className="hover:text-orwas-cream transition-colors">
             Privacy

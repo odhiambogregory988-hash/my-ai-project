@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    --color-ink: 26 23 20;
-    --color-clay: 140 123 107;
-    --color-sand: 212 197 178;
-    --color-cream: 245 240 235;
-    --color-ivory: 250 248 245;
-    --color-amber: 200 169 110;
+    --color-ink: 17 24 39;      /* Primary #111827 */
+    --color-clay: 139 94 60;    /* Accent #8B5E3C */
+    --color-sand: 229 231 235;
+    --color-cream: 255 255 255;
+    --color-ivory: 249 250 251; /* Background #F9FAFB */
+    --color-amber: 212 175 55;  /* Gold #D4AF37 */
   }
 
   html {

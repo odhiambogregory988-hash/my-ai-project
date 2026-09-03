@@ -10,12 +10,24 @@ import { formatPrice, PRODUCT_CATEGORIES } from "@/lib/store";
 export default function CollectionsPage() {
   const { products, locale, currency, addToCart } = useStore();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [search, setSearch] = useState("");
 
   const visibleProducts = useMemo(() => {
-    return selectedCategory === "All"
-      ? products
-      : products.filter((product) => product.category === selectedCategory);
-  }, [products, selectedCategory]);
+    const query = search.trim().toLowerCase();
+    const byCategory =
+      selectedCategory === "All"
+        ? products
+        : products.filter((product) => product.category === selectedCategory);
+
+    if (!query) return byCategory;
+
+    return byCategory.filter((product) =>
+      [product.name, product.collection, product.category, product.description ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [products, selectedCategory, search]);
 
   return (
     <>
@@ -32,23 +44,43 @@ export default function CollectionsPage() {
             </p>
           </div>
 
-          <div className="mb-8 flex flex-wrap gap-3">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setSelectedCategory("All")}
               className={`px-4 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors ${selectedCategory === "All" ? "bg-orwas-ink text-orwas-cream" : "border border-orwas-clay/20 bg-orwas-cream text-orwas-ink"}`}
             >
               All
             </button>
-            {PRODUCT_CATEGORIES.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors ${selectedCategory === category ? "bg-orwas-ink text-orwas-cream" : "border border-orwas-clay/20 bg-orwas-cream text-orwas-ink"}`}
-              >
-                {category}
-              </button>
-            ))}
+              {PRODUCT_CATEGORIES.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors ${selectedCategory === category ? "bg-orwas-ink text-orwas-cream" : "border border-orwas-clay/20 bg-orwas-cream text-orwas-ink"}`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+            <div className="relative md:w-72">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products…"
+                className="w-full border border-orwas-sand bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-orwas-amber"
+              />
+              <svg className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-orwas-clay" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+              </svg>
+            </div>
           </div>
+
+          {visibleProducts.length === 0 && (
+            <div className="rounded-sm border border-orwas-sand/60 bg-white px-8 py-16 text-center">
+              <p className="font-display text-2xl text-orwas-ink">Nothing matches “{search}”.</p>
+              <p className="mt-2 text-sm text-orwas-clay">Try a different search or clear the filters.</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
             {visibleProducts.map((product) => (

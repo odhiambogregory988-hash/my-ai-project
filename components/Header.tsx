@@ -6,9 +6,11 @@ import { useStore } from "@/components/StoreProvider";
 import CartDrawer from "@/components/CartDrawer";
 
 const NAV_LINKS = [
-  { label: "Collections", href: "/collections" },
+  { label: "Shop", href: "/collections" },
   { label: "Journal", href: "/journal" },
   { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "Account", href: "/dashboard" },
   { label: "Admin", href: "/admin" },
 ];
 
@@ -28,7 +30,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-10">
+        <ul className="hidden lg:flex items-center gap-7">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <Link
@@ -45,7 +47,7 @@ export default function Header() {
           <button onClick={() => setCartOpen(true)} className="text-orwas-cream text-xs uppercase tracking-[0.2em]" aria-label="Open shopping cart">
             Cart ({cartCount})
           </button>
-          <button className="md:hidden relative z-10 flex flex-col gap-1.5" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+          <button className="lg:hidden relative z-10 flex flex-col gap-1.5" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
             <span className={`block w-6 h-px bg-orwas-cream transition-all duration-300 ${mobileOpen ? "rotate-45 translate-y-[4px]" : ""}`} />
             <span className={`block w-6 h-px bg-orwas-cream transition-all duration-300 ${mobileOpen ? "-rotate-45 -translate-y-[4px]" : ""}`} />
           </button>
@@ -54,7 +56,7 @@ export default function Header() {
 
       {/* Mobile overlay */}
       <div
-        className={`fixed inset-0 bg-orwas-ink/95 backdrop-blur-md transition-all duration-500 md:hidden ${
+        className={`fixed inset-0 bg-orwas-ink/95 backdrop-blur-md transition-all duration-500 lg:hidden ${
           mobileOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"

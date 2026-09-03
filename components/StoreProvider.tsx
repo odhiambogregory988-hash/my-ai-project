@@ -19,6 +19,7 @@ interface StoreContextValue {
   addToCart: (product: Product) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeFromCart: (id: string) => void;
+  clearCart: () => void;
   saveProducts: (products: Product[]) => void;
 }
 
@@ -71,6 +72,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const removeFromCart = (id: string) => setCart((current) => current.filter((item) => item.id !== id));
 
+  const clearCart = () => setCart([]);
+
   const saveProducts = (nextProducts: Product[]) => {
     setProducts(nextProducts);
     window.localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(nextProducts));
@@ -87,6 +90,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         addToCart,
         updateQuantity,
         removeFromCart,
+        clearCart,
         saveProducts,
       }}
     >

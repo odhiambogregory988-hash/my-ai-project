@@ -529,4 +529,56 @@ Track your progress across sessions.
 
 ---
 
+## Session 15 — September 3, 2026
+
+**What we did — brand update + full e-commerce roadmap (from your brief & screenshots):**
+
+**Brand design applied:**
+- New color palette: Primary `#111827`, Gold `#D4AF37`, Accent `#8B5E3C`, Background `#F9FAFB`
+- Updated `tailwind.config.ts` + `globals.css` — every existing `orwas-*` color automatically uses the new palette
+- Rebranded to **Orwa Sole Co.** — premium footwear platform (metadata, footer, about page, admin)
+
+**New public pages:**
+- `/contact` — Contact page with form + studio details
+- `/collections` (Shop) — added product search + filtering (screenshots asked for catalog, search, filter)
+
+**New customer pages (from screenshots 1–4):**
+- `/register` — Create account
+- `/login` — Sign in
+- `/dashboard` — Profile dashboard (edit name, shipping address, change password, sign out)
+- `/orders` — Order history with status timeline (Processing → Shipped → Delivered)
+
+**New admin pages (from screenshots 3–4):**
+- `/admin` — Admin dashboard with stats (products, customers, orders, revenue) + recent orders
+- `/admin/products` — Product management (moved from /admin)
+- `/admin/customers` — Customer management (view accounts + delete)
+- `/admin/orders` — Order management (update status, delete)
+
+**Working e-commerce loop (Phase 4–5):**
+- Checkout button now places a real order → clears bag → shows success on /orders
+- Orders appear in customer's /orders AND in admin /admin/orders
+- If not signed in at checkout, bag is saved and order auto-places after login
+- New `lib/accounts.ts` — demo customer accounts + orders (localStorage). Real auth/payment APIs come later (partner)
+
+**Fixes:**
+- Fixed build error: `/login` needed Suspense boundary around `useSearchParams` (same fix as /orders)
+- Typecheck ✅ and production build ✅ — all 13 routes compile
+
+**Files changed:**
+- `tailwind.config.ts`, `app/globals.css` — new brand palette
+- `lib/accounts.ts` — NEW: customers, sessions, orders, hashed demo passwords
+- `components/StoreProvider.tsx` — added `clearCart`
+- `components/Header.tsx`, `components/Footer.tsx` — nav to all new pages, Orwa Sole Co. branding
+- `components/CartDrawer.tsx` — checkout now places orders; colors aligned to new palette
+- `app/contact`, `app/register`, `app/login`, `app/dashboard`, `app/orders` — NEW pages
+- `app/admin` (dashboard), `app/admin/products`, `app/admin/customers`, `app/admin/orders` — admin section
+- `app/about`, `app/layout.tsx`, `app/collections` — updated copy + search
+
+**Next time, we can:**
+- Move from localStorage demo to Supabase auth + real database (Phase 3–5 backend)
+- Add order confirmation emails / invoice PDFs
+- Deploy to Vercel and connect the custom domain (Phase 6)
+
+---
+
 *Update this after every session.*

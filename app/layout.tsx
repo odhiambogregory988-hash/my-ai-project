@@ -3,9 +3,9 @@ import "./globals.css";
 import { StoreProvider } from "@/components/StoreProvider";
 
 export const metadata: Metadata = {
-  title: "Orwas — Curated Collections",
+  title: "Orwa Sole Co. — Premium Footwear",
   description:
-    "Discover Orwas — where craft meets curation. Explore our collections of timeless pieces.",
+    "Discover Orwa Sole Co. — premium footwear and considered apparel, crafted to endure. Shop the collection online.",
 };
 
 export default function RootLayout({

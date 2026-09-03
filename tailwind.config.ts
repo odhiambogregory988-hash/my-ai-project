@@ -9,18 +9,18 @@ const config: Config = {
     extend: {
       colors: {
         orwas: {
-          // Primary palette — earthy luxury
-          ink: "#1a1714",
-          clay: "#8c7b6b",
-          sand: "#d4c5b2",
-          cream: "#f5f0eb",
-          ivory: "#faf8f5",
-          // Accent — warm gold
-          amber: "#c8a96e",
-          "amber-light": "#dcc59a",
+          // Brand palette — Orwa Sole Co.
+          ink: "#111827", // Primary — near-black
+          clay: "#8B5E3C", // Accent — warm brown
+          sand: "#E5E7EB", // Neutral — light gray
+          cream: "#FFFFFF", // Cards — white
+          ivory: "#F9FAFB", // Background
+          // Gold accent
+          amber: "#D4AF37",
+          "amber-light": "#E2C15F",
           // Utility
-          mist: "#e8e2da",
-          stone: "#6b5e50",
+          mist: "#F3F4F6",
+          stone: "#4B5563",
         },
       },
       fontFamily: {
