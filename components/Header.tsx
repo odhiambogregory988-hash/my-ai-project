@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useStore } from "@/components/StoreProvider";
 import CartDrawer from "@/components/CartDrawer";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 const NAV_LINKS = [
   { label: "Shop", href: "/collections" },
@@ -14,13 +15,14 @@ const NAV_LINKS = [
   { label: "Admin", href: "/admin" },
 ];
 
-export default function Header() {
+export default function Header({ showAnnouncement = false }: { showAnnouncement?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const { cartCount } = useStore();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-orwas-ink/90 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-orwas-ink/90 backdrop-blur-md gpu-layer">
+      {showAnnouncement && <AnnouncementBar />}
       <nav className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-6">
         {/* Brand mark */}
         <Link href="/" className="relative z-10">

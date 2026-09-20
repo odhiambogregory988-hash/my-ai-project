@@ -745,4 +745,40 @@ Track your progress across sessions.
 
 ---
 
+---
+
+## Session (latest) — Google sign-in fix across all platforms
+
+**What we did:**
+- Wrote the definitive Supabase Google OAuth redirect URL setup guide (`my-ai-project/14-google-redirect-setup.md`):
+  - Covers URL Configuration (Redirect URLs with wildcards like `http://localhost:*/**` to handle changing dev ports)
+  - Covers Google Cloud Console (Authorized redirect URIs + OAuth consent screen)
+  - Covers Supabase Google provider setup + troubleshooting for every common error
+- Fixed the admin Google button redirect: changed from `/admin/callback` to `/admin/login` — the login page already handles `?code=` params client-side, so this unifies the admin Google flow and removes the separate callback page as a required path
+- Made the `GoogleSignInButton` error handling more robust: removed the unnecessary `async/await` wrapper around `signInWithOAuth` (which redirects the browser and doesn't return on success), so errors during the redirect itself are caught properly
+- Verified all four Google sign-in entry points render correctly: `/login` (customer sign in), `/register` (customer create account), `/admin/login` (admin sign in, dark variant), and the dashboard "Switch account" button
+- All pages serve HTTP 200; typecheck passes
+
+**Flows covered:**
+| Platform | Page | Google redirects to |
+|---|---|---|
+| Customer sign in | `/login` | `/dashboard` |
+| Customer create account | `/register` | `/dashboard` |
+| Admin sign in | `/admin/login` | `/admin/login?code=...` → validates → `/admin` |
+| Switch account | `/dashboard` | `/dashboard` (with `prompt=select_account`) |
+
+**Still needs to be done in the Supabase dashboard (one-time, manual):**
+1. **URL Configuration** → add these Redirect URLs: `http://localhost:3000/**`, `http://localhost:*/**`, `https://kgpkwapxntndsxmfzlgu.supabase.co/auth/v1/callback`
+2. **Google Cloud Console** → confirm `https://kgpkwapxntndsxmfzlgu.supabase.co/auth/v1/callback` is in Authorized redirect URIs
+3. **Google Cloud Console** → add your Gmail(s) as test users if the consent screen is in Testing mode
+4. **Supabase → Authentication → Providers → Google** → confirm Client ID + Secret are pasted, provider is ON
+
+**Common errors and their fixes (all documented in the setup guide):**
+- "Unable to exchange external code: 4/0A..." → stale Client Secret in Supabase — re-paste from Google Cloud Console
+- "Redirect URL not allowed" → the port in `window.location.origin` isn't in Supabase's allow list — add `http://localhost:*/**` wildcard
+- Redirect goes to wrong port → same fix — wildcard covers all ports
+- Works on PC, not on phone → `localhost` only exists on the dev machine — test from the PC or deploy
+
+---
+
 *Update this after every session.*

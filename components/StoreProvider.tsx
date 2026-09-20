@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   CartItem,
   DEFAULT_PRODUCTS,
@@ -29,6 +37,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [{ locale, currency }, setMoney] = useState({ locale: "en-US", currency: "USD" });
+  const hasLoadedCart = useRef(false);
 
   useEffect(() => {
     setProducts(loadProducts());
@@ -38,14 +47,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (savedCart) setCart(JSON.parse(savedCart));
     } catch {
       setCart([]);
+    } finally {
+      hasLoadedCart.current = true;
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("orwas-cart", JSON.stringify(cart));
+    if (!hasLoadedCart.current) return;
+    try {
+      window.localStorage.setItem("orwas-cart", JSON.stringify(cart));
+    } catch {
+      // ignore storage quota errors
+    }
   }, [cart]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = useCallback((product: Product) => {
     setCart((current) => {
       const existing = current.find((item) => item.id === product.id);
       if (existing) {
@@ -57,46 +73,62 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       return product.inventory > 0 ? [...current, { ...product, quantity: 1 }] : current;
     });
-  };
+  }, []);
 
-  const updateQuantity = (id: string, quantity: number) => {
-    const product = products.find((item) => item.id === id);
-    if (!product) return;
-    if (quantity <= 0) return removeFromCart(id);
-    setCart((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, quantity: Math.min(quantity, product.inventory) } : item,
-      ),
-    );
-  };
+  const removeFromCart = useCallback((id: string) => {
+    setCart((current) => current.filter((item) => item.id !== id));
+  }, []);
 
-  const removeFromCart = (id: string) => setCart((current) => current.filter((item) => item.id !== id));
+  const updateQuantity = useCallback((id: string, quantity: number) => {
+    setCart((current) => {
+      if (quantity <= 0) return current.filter((item) => item.id !== id);
+      return current.map((item) =>
+        item.id === id ? { ...item, quantity: Math.min(quantity, item.inventory) } : item,
+      );
+    });
+  }, []);
 
-  const clearCart = () => setCart([]);
+  const clearCart = useCallback(() => setCart([]), []);
 
-  const saveProducts = (nextProducts: Product[]) => {
+  const saveProducts = useCallback((nextProducts: Product[]) => {
     setProducts(nextProducts);
-    window.localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(nextProducts));
-  };
+    try {
+      window.localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(nextProducts));
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  return (
-    <StoreContext.Provider
-      value={{
-        products,
-        cart,
-        currency,
-        locale,
-        cartCount: cart.reduce((total, item) => total + item.quantity, 0),
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        saveProducts,
-      }}
-    >
-      {children}
-    </StoreContext.Provider>
+  const cartCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
+
+  const value = useMemo<StoreContextValue>(
+    () => ({
+      products,
+      cart,
+      currency,
+      locale,
+      cartCount,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      clearCart,
+      saveProducts,
+    }),
+    [
+      products,
+      cart,
+      currency,
+      locale,
+      cartCount,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      clearCart,
+      saveProducts,
+    ],
   );
+
+  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
 export function useStore() {

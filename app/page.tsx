@@ -13,6 +13,7 @@ export default function HomePage() {
     <>
       <AnnouncementBar />
       <Header />
+      <Header showAnnouncement={true} />
       <main>
         <VideoShowcase />
         <Editorial />

@@ -1,17 +1,30 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
+import Image from "next/image";
 import { formatPrice } from "@/lib/store";
 import { useStore } from "@/components/StoreProvider";
 import { createOrder, getSession } from "@/lib/accounts";
 
-const COMPLETE_YOUR_LOOK = [
+import { ProductCategory } from "@/lib/store";
+
+const COMPLETE_YOUR_LOOK: Array<{
+  id: string;
+  name: string;
+  price: number;
+  collection: string;
+  inventory: number;
+  category: ProductCategory;
+  image: string;
+  description: string;
+}> = [
   {
     id: "look-1",
     name: "Clarks Desert Boot",
     price: 8500,
     collection: "Heritage",
     inventory: 15,
-    category: "Footwear" as const,
+    category: "Footwear",
     image: "/collections/clark.jpeg",
     description: "British heritage footwear — iconic since 1950",
   },
@@ -21,7 +34,7 @@ const COMPLETE_YOUR_LOOK = [
     price: 1800,
     collection: "Heritage",
     inventory: 12,
-    category: "Accessories" as const,
+    category: "Accessories",
     image: "/collections/collection-2.jpeg",
     description: "Hand-stitched leather belt — timeless finish",
   },
@@ -31,7 +44,7 @@ const COMPLETE_YOUR_LOOK = [
     price: 7200,
     collection: "Heritage",
     inventory: 8,
-    category: "Footwear" as const,
+    category: "Footwear",
     image: "/collections/clark-2.jpeg",
     description: "Timeless suede silhouette — street culture staple",
   },
@@ -39,8 +52,19 @@ const COMPLETE_YOUR_LOOK = [
 
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { cart, locale, currency, updateQuantity, removeFromCart, addToCart, clearCart } = useStore();
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    if (open) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [open]);
+
+  const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
+  const itemCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
   const freeShippingThreshold = 10000;
   const deliveryFee = total >= freeShippingThreshold ? 0 : 500;
 
@@ -68,13 +92,12 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       <button
         aria-label="Close cart"
         onClick={onClose}
-        className="absolute inset-0 bg-[#0B1220] transition-opacity duration-500"
-        style={{ opacity: open ? 1 : 0 }}
+        className={`absolute inset-0 bg-[#0B1220] transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
 
       {/* Cart Panel — luxury fashion drawer */}
       <aside
-        className={`absolute right-0 top-0 h-full w-full max-w-[440px] text-orwas-ink transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col shadow-[0_0_0_1px_rgba(17,24,39,0.04),-20px_0_40px_rgba(17,24,39,0.18)] ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`absolute right-0 top-0 h-full w-full max-w-[440px] text-orwas-ink transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col shadow-[0_0_0_1px_rgba(17,24,39,0.04),-20px_0_40px_rgba(17,24,39,0.18)] gpu-layer ${open ? "translate-x-0" : "translate-x-full"}`}
         style={{ backgroundColor: "#FFFFFF", borderLeft: "1px solid rgba(17,24,39,0.08)" }}
       >
         {/* Header — editorial style */}
@@ -171,10 +194,12 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                     {/* Image — fashion card style */}
                     <div className="relative h-28 w-24 shrink-0 overflow-hidden" style={{ backgroundColor: "rgba(17,24,39,0.05)" }}>
                       {item.image ? (
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center">
@@ -186,33 +211,30 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                     </div>
 
                     {/* Details — editorial typography */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[9px] uppercase tracking-[0.3em] text-orwas-amber mb-1 font-medium">
-                              {item.collection}
-                            </p>
-                            <h3 className="text-sm font-medium text-orwas-ink leading-snug">
-                              {item.name}
-                            </h3>
-                          </div>
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="shrink-0 mt-0.5 text-orwas-clay/50 hover:text-red-400 transition-colors duration-300"
-                            aria-label={`Remove ${item.name}`}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[9px] uppercase tracking-[0.3em] text-orwas-amber mb-1 font-medium">
+                            {item.collection}
+                          </p>
+                          <h3 className="text-sm font-medium text-orwas-ink leading-snug line-clamp-2" style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2 }}>
+                            {item.name}
+                          </h3>
                         </div>
-                        {item.description && (
-                          <p className="text-[10px] text-orwas-clay mt-1 leading-relaxed line-clamp-1">{item.description}</p>
-                        )}
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="shrink-0 mt-0.5 text-orwas-clay/50 hover:text-red-400 transition-colors duration-300"
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
                       </div>
-
-                      <div className="flex items-end justify-between mt-3">
+                      {item.description && (
+                        <p className="text-[10px] text-orwas-clay mt-1 leading-relaxed line-clamp-2" style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2 }}>{item.description}</p>
+                      )}
+                      <div className="flex items-end justify-between mt-2">
                         <p className="text-sm font-display text-orwas-ink">
                           {formatPrice(item.price, locale, currency)}
                           {item.quantity > 1 && (
@@ -259,11 +281,13 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                       onClick={() => addToCart(product)}
                       className="flex-shrink-0 w-[100px] group text-left"
                     >
-                      <div className="aspect-[3/4] overflow-hidden mb-2" style={{ backgroundColor: "rgba(17,24,39,0.05)" }}>
-                        <img
+                      <div className="aspect-[3/4] relative overflow-hidden mb-2" style={{ backgroundColor: "rgba(17,24,39,0.05)" }}>
+                        <Image
                           src={product.image}
                           alt={product.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          fill
+                          sizes="100px"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>
                       <p className="text-[9px] text-orwas-clay truncate mb-0.5">{product.name}</p>

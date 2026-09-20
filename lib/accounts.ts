@@ -266,7 +266,7 @@ export async function loginCustomer(email: string, password: string) {
   }
 
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
   if (error) {
     const message = error.message.toLowerCase().includes("not confirmed")

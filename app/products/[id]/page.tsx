@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -42,9 +43,16 @@ export default function ProductDetailPage() {
           </Link>
 
           <div className="grid gap-10 md:grid-cols-2">
-            <div className="overflow-hidden rounded-sm bg-orwas-sand/30">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-orwas-sand/30">
               {product.image ? (
-                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                />
               ) : (
                 <div className="flex h-full min-h-[480px] w-full items-center justify-center text-[10px] uppercase tracking-[0.3em] text-orwas-clay">
                   Product image
@@ -81,9 +89,15 @@ export default function ProductDetailPage() {
               <div className="mt-8 grid gap-6 md:grid-cols-3">
                 {related.map((item) => (
                   <Link key={item.id} href={`/products/${item.id}`} className="group block overflow-hidden rounded-sm border border-orwas-clay/15 bg-orwas-cream">
-                    <div className="aspect-[3/4] bg-orwas-sand/30">
+                    <div className="relative aspect-[3/4] bg-orwas-sand/30 overflow-hidden">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.3em] text-orwas-clay">
                           Product

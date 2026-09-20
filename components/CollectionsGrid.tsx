@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import { useStore } from "@/components/StoreProvider";
@@ -151,7 +152,7 @@ export default function CollectionsGrid() {
   };
 
   return (
-    <Section label="Explore" className="py-section bg-orwas-cream">
+    <Section label="Explore" className="py-section bg-orwas-cream content-auto">
       <div className="flex flex-col gap-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <h2 className="text-display-lg font-display text-orwas-ink reveal">
@@ -201,10 +202,12 @@ export default function CollectionsGrid() {
                 key={index}
                 className="group relative aspect-[3/4] overflow-hidden rounded-sm bg-orwas-sand/30 reveal transition-transform duration-500 hover:-translate-y-1"
               >
-                <img
+                <Image
                   src={item.image}
                   alt={item.name}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink/70 via-orwas-ink/10 to-transparent opacity-90" />
                 

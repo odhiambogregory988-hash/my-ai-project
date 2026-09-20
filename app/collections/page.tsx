@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -86,12 +87,14 @@ export default function CollectionsPage() {
             {visibleProducts.map((product) => (
               <article key={product.id} className="group overflow-hidden rounded-sm border border-orwas-clay/15 bg-orwas-cream">
                 <Link href={`/products/${product.id}`} className="block">
-                  <div className="aspect-[3/4] overflow-hidden bg-orwas-sand/30">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-orwas-sand/30">
                     {product.image ? (
-                      <img
+                      <Image
                         src={product.image}
                         alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.3em] text-orwas-clay">

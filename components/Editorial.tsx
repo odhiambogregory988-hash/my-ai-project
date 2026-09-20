@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 
 const EDITORIAL_ITEMS = [
@@ -31,7 +32,7 @@ const EDITORIAL_ITEMS = [
 
 export default function Editorial() {
   return (
-    <Section label="The Philosophy" className="py-section bg-orwas-ivory">
+    <Section label="The Philosophy" className="py-section bg-orwas-ivory content-auto">
       <div className="flex flex-col gap-section-sm">
         <div className="mb-8 max-w-3xl">
           <h2 className="reveal font-display text-display-lg text-orwas-ink">
@@ -48,10 +49,12 @@ export default function Editorial() {
               className="group flex flex-col gap-6 rounded-sm border border-orwas-clay/10 bg-orwas-cream p-5 reveal md:p-6"
             >
               <div className="img-hover relative aspect-[4/3] overflow-hidden rounded-sm bg-orwas-sand/30">
-                <img
+                <Image
                   src={item.image}
                   alt={item.imageAlt}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink/20 to-transparent" />
               </div>

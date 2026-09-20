@@ -20,13 +20,22 @@ export default function AdminAdminsPage() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/admin/admins");
-      const data = await res.json();
-      if (res.ok) {
-        setAdmins(data.admins);
-        setOwner(data.owner);
-      } else {
-        setError(data.error || "Could not load the admin list.");
+      try {
+        const res = await fetch("/api/admin/admins");
+        if (res.status === 401) {
+          // Admin session expired — send to sign-in instead of showing a dead page.
+          window.location.assign("/admin/login?from=/admin/admins");
+          return;
+        }
+        const data = await res.json();
+        if (res.ok) {
+          setAdmins(data.admins);
+          setOwner(data.owner);
+        } else {
+          setError(data.error || "Could not load the admin list.");
+        }
+      } catch {
+        setError("Could not reach the server. Refresh the page to try again.");
       }
       setLoaded(true);
     })();

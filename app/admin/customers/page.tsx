@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { formatDate, loadCustomers, loadOrders, saveCustomers, Customer } from "@/lib/accounts";
 
@@ -8,11 +9,17 @@ export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [mode, setMode] = useState<"supabase" | "demo">("supabase");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch("/api/admin/data");
+        if (res.status === 401) {
+          // Admin session expired — send to sign-in instead of showing a dead page.
+          window.location.assign("/admin/login?from=/admin/customers");
+          return;
+        }
         const data = await res.json();
         if (data.configured) {
           setMode("supabase");
@@ -28,7 +35,12 @@ export default function AdminCustomersPage() {
         // fall through to demo
       }
       setMode("demo");
-      setCustomers(await loadCustomers());
+      try {
+        setCustomers(await loadCustomers());
+      } catch {
+        setLoadError("Could not load customers. Refresh the page to try again.");
+        return;
+      }
       const orders = await loadOrders();
       const counts: Record<string, number> = {};
       for (const order of orders) {
@@ -70,6 +82,12 @@ export default function AdminCustomersPage() {
         </div>
       </header>
 
+      {loadError && (
+        <p role="alert" className="mb-8 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+          {loadError}
+        </p>
+      )}
+
       {mode === "demo" && (
         <div className="mb-8 border border-orwas-amber/40 bg-orwas-amber/10 px-5 py-4 text-sm text-orwas-ink">
           <p className="font-medium">Browser demo mode</p>
@@ -95,7 +113,7 @@ export default function AdminCustomersPage() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-orwas-sand bg-orwas-mist">
                         {customer.avatarUrl ? (
-                          <img src={customer.avatarUrl} alt={customer.name} className="h-full w-full object-cover" />
+                          <Image src={customer.avatarUrl} alt={customer.name} width={40} height={40} unoptimized className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-xs font-medium text-orwas-clay">
                             {(customer.name.trim().match(/\b\w/g) ?? []).slice(0, 2).join("").toUpperCase() || "OS"}

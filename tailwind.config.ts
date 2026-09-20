@@ -24,8 +24,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['"Playfair Display"', "Georgia", "serif"],
-        body: ['"Inter"', "system-ui", "sans-serif"],
+        display: ["var(--font-playfair)", '"Playfair Display"', "Georgia", "serif"],
+        body: ["var(--font-inter)", '"Inter"', "system-ui", "sans-serif"],
       },
       fontSize: {
         "display-xl": ["clamp(3rem, 8vw, 7rem)", { lineHeight: "0.95", letterSpacing: "-0.03em" }],

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ChangeEvent, useState } from "react";
 import { fileToDataUrl, inferProductNameFromImage, Product, PRODUCT_CATEGORIES } from "@/lib/store";
 import { useStore } from "@/components/StoreProvider";
@@ -82,7 +83,7 @@ export default function AdminProductsPage() {
                 <div className="flex items-center gap-3">
                   <label className="relative block h-14 w-14 cursor-pointer overflow-hidden rounded-sm border border-orwas-sand bg-orwas-mist">
                     {product.image ? (
-                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                      <Image src={product.image} alt={product.name} width={56} height={56} unoptimized className="h-full w-full object-cover" />
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Image</span>
                     )}
@@ -132,8 +133,11 @@ export default function AdminProductsPage() {
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-3">
                 <label className="relative block h-20 w-20 cursor-pointer overflow-hidden rounded-sm border border-orwas-sand bg-orwas-mist">
-                  <img src={draft.image || undefined} alt={draft.name} className={draft.image ? "h-full w-full object-cover" : "hidden"} />
-                  <span className={draft.image ? "hidden" : "flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.2em] text-orwas-clay"}>Upload</span>
+                  {draft.image ? (
+                    <Image src={draft.image} alt={draft.name || "Draft"} width={80} height={80} unoptimized className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Upload</span>
+                  )}
                   <input type="file" accept="image/*" onChange={handleDraftImage} className="hidden" />
                 </label>
                 <div className="flex-1">

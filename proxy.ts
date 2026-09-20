@@ -1,8 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isAdminTokenValid, cookieName } from "@/lib/auth";
 
-export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === "/admin/login" || request.nextUrl.pathname === "/admin/callback") {
+export async function proxy(request: NextRequest) {
+  if (
+    request.nextUrl.pathname === "/admin/login" ||
+    request.nextUrl.pathname === "/admin/callback" ||
+    request.nextUrl.pathname === "/admin/reset-password"
+  ) {
     return NextResponse.next();
   }
 
@@ -21,3 +25,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/admin/:path*"],
 };
+

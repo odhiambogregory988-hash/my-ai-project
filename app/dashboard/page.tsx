@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
@@ -132,9 +133,9 @@ export default function DashboardPage() {
           <div className="mx-auto max-w-6xl px-6 md:px-12 lg:px-20">
             <div className="flex flex-wrap items-start justify-between gap-8">
               <div className="flex items-start gap-5">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-orwas-amber/60 bg-orwas-stone">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-orwas-amber/60 bg-orwas-stone relative">
                   {session.avatarUrl ? (
-                    <img src={session.avatarUrl} alt={session.name} className="h-full w-full object-cover" />
+                    <Image src={session.avatarUrl} alt={session.name} width={80} height={80} unoptimized className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center font-display text-xl text-orwas-cream">
                       {initials}
@@ -234,9 +235,9 @@ export default function DashboardPage() {
                     className="group rounded-sm border border-orwas-sand/60 bg-white p-5 transition-all hover:border-orwas-amber/60 hover:shadow-[0_20px_50px_rgba(17,24,39,0.06)]"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-orwas-sand bg-orwas-mist">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-orwas-sand bg-orwas-mist relative">
                         {order.items[0]?.image ? (
-                          <img src={order.items[0].image} alt={order.items[0].name} className="h-full w-full object-cover" />
+                          <Image src={order.items[0].image} alt={order.items[0].name} width={56} height={56} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-widest text-orwas-clay">
                             OS
@@ -283,9 +284,9 @@ export default function DashboardPage() {
                 A photo makes your account feel personal — it shows on your dashboard and to the store team.
               </p>
               <div className="mt-6 flex flex-col items-start gap-4">
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-orwas-amber/50 bg-orwas-ink">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-orwas-amber/50 bg-orwas-ink relative">
                   {session.avatarUrl ? (
-                    <img src={session.avatarUrl} alt={session.name} className="h-full w-full object-cover" />
+                    <Image src={session.avatarUrl} alt={session.name} width={64} height={64} unoptimized className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center font-display text-lg text-orwas-cream">
                       {initials}

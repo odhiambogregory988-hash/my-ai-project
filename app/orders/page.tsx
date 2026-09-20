@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -134,7 +135,7 @@ function OrdersContent() {
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="h-14 w-12 shrink-0 rounded-sm object-cover" />
+                          <Image src={item.image} alt={item.name} width={48} height={56} className="h-14 w-12 shrink-0 rounded-sm object-cover" />
                         ) : (
                           <div className="h-14 w-12 shrink-0 rounded-sm bg-orwas-mist" />
                         )}

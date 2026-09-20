@@ -12,12 +12,15 @@ export function isOwnerEmail(email?: string | null) {
 const cookieName = "orwas-admin-session";
 const secret = new TextEncoder().encode(process.env.ADMIN_SESSION_SECRET || "");
 
+/** Admin session length: 30 days. JWT expiry and cookie maxAge must stay in sync. */
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+
 export async function createAdminToken() {
   if (!process.env.ADMIN_SESSION_SECRET) throw new Error("ADMIN_SESSION_SECRET is not configured");
   return new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("8h")
+    .setExpirationTime("30d")
     .sign(secret);
 }
 

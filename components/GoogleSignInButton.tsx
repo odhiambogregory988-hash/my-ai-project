@@ -15,6 +15,8 @@ export default function GoogleSignInButton({
   dark = false,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const [fallbackUrl, setFallbackUrl] = useState("");
 
   // No Google sign-in unless Supabase is configured
   if (!isSupabaseConfigured()) return null;
@@ -23,25 +25,47 @@ export default function GoogleSignInButton({
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithOAuth({
+      // On success the browser navigates away to Google, so the promise
+      // resolving just means the redirect started. If it resolves with an
+      // error (provider disabled, bad redirect URL, network), show it.
+      const { error, data } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}${redirectTo}`,
         },
       });
       if (error) {
-        console.error("[orwas] Google sign-in failed:", error.message);
+        console.error("[orwas] Google sign-in error:", error.message);
+        setErrMsg(
+          error.message.includes("provider") || error.message.includes("enabled")
+            ? "Google sign-in is not enabled yet. The store owner must enable the Google provider in the Supabase dashboard."
+            : `Google sign-in error: ${error.message}`,
+        );
         setLoading(false);
+        return;
       }
-      // On success the browser redirects to Google — no need to reset state.
+      // Navigation was initiated. If the page is still alive after a moment
+      // (sandboxed preview, popup blocker), offer a manual link instead.
+      const url = data?.url;
+      setTimeout(() => {
+        if (url) setFallbackUrl(url);
+        setLoading(false);
+      }, 1500);
     } catch (error) {
       console.error("[orwas] Google sign-in failed:", error);
+      setErrMsg("Google sign-in failed. Check your internet connection and try again.");
       setLoading(false);
     }
   };
 
   return (
-    <button
+    <div className="w-full">
+      {errMsg && (
+        <p role="alert" className="mb-3 border border-red-300 bg-red-50 px-3 py-2 text-center text-xs text-red-700">
+          {errMsg}
+        </p>
+      )}
+      <button
       type="button"
       onClick={handleGoogle}
       disabled={loading}
@@ -70,6 +94,15 @@ export default function GoogleSignInButton({
         />
       </svg>
       {loading ? "Connecting…" : "Continue with Google"}
-    </button>
+      </button>
+      {fallbackUrl && (
+        <a
+          href={fallbackUrl}
+          className="mt-3 block border border-orwas-amber bg-orwas-amber/10 px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-orwas-ink transition-colors hover:bg-orwas-amber"
+        >
+          Nothing happened? Tap here to continue with Google →
+        </a>
+      )}
+    </div>
   );
 }

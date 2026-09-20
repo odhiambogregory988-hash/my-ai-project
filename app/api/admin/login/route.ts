@@ -1,14 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import { cookieName, createAdminToken, isOwnerEmail } from "@/lib/auth";
+import { cookieName, createAdminToken, isOwnerEmail, ADMIN_SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
-  const { email, password } = await request.json();
+  let body: { email?: unknown; password?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ message: "Invalid request." }, { status: 400 });
+  }
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+
+  if (!email || !password) {
+    return NextResponse.json({ message: "Enter your email and password." }, { status: 400 });
+  }
 
   // Fallback: the old env-based gate, only when Supabase isn't configured.
   if (!isSupabaseConfigured()) {
-    const valid = email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD;
+    const valid =
+      email.toLowerCase() === String(process.env.ADMIN_EMAIL || "").toLowerCase() &&
+      password === process.env.ADMIN_PASSWORD;
     if (!valid) return NextResponse.json({ message: "Invalid email or password." }, { status: 401 });
 
     const token = await createAdminToken();
@@ -18,7 +31,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 8,
+      maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
     });
     return response;
   }
@@ -45,10 +58,16 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) {
+    // Supabase returns the SAME error for wrong password, password-less
+    // account, and unknown email — so give one honest message that points
+    // Google users at the right button instead of a misleading claim.
+    const msg = error?.message || "";
+    const invalid = /invalid|credentials/i.test(msg) || (error as { code?: string } | null)?.code === "invalid_credentials";
     return NextResponse.json(
       {
-        message:
-          "No password account found for this email. Use Continue with Google to sign in as an admin.",
+        message: invalid
+          ? "Invalid email or password. If you normally sign in with Google, tap Continue with Google below."
+          : `Sign-in problem: ${msg}. Please try again.`,
       },
       { status: 401 },
     );
@@ -73,7 +92,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 8,
+      maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
       ...options,
     });
   });
@@ -82,7 +101,7 @@ export async function POST(request: NextRequest) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
   });
   return response;
 }

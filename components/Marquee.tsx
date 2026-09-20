@@ -18,8 +18,8 @@ export default function Marquee() {
   const items = [...words, ...words];
 
   return (
-    <div className="py-10 border-y border-orwas-sand/60 overflow-hidden bg-orwas-cream">
-      <div className="flex animate-marquee whitespace-nowrap">
+    <div className="py-10 border-y border-orwas-sand/60 overflow-hidden bg-orwas-cream content-auto">
+      <div className="flex animate-marquee whitespace-nowrap gpu-layer">
         {items.map((word, i) => (
           <span key={i} className="flex items-center shrink-0">
             <span className="font-display text-display-md text-orwas-sand/50 mx-8 select-none">
