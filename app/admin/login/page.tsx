@@ -317,10 +317,10 @@ export default function AdminLoginPage() {
               type="button"
               onClick={handleGoogle}
               disabled={googleLoading}
-              className="group w-full rounded-sm border border-orwas-cream/20 bg-orwas-cream/5 px-6 py-3.5 text-xs uppercase tracking-[0.25em] text-orwas-cream transition-all duration-200 hover:bg-orwas-cream hover:text-orwas-ink hover:border-orwas-cream/60 disabled:opacity-50"
+              className="flex w-full items-center justify-center rounded-sm border border-[#dadce0] bg-white px-6 py-3 text-sm font-medium text-[#3c4043] shadow-sm transition-colors duration-200 hover:bg-[#f8f9fa] disabled:opacity-50"
             >
               <svg
-                className="mr-3 h-4 w-4 shrink-0 transition-colors duration-200 group-hover:translate-x-0.5"
+                className="mr-3 h-5 w-5 shrink-0"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
                 fill="none"

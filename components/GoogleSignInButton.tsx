@@ -6,13 +6,10 @@ import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabas
 interface GoogleSignInButtonProps {
   /** Where to send the user after Google auth (default: customer dashboard). */
   redirectTo?: string;
-  /** Dark variant for the admin login page. */
-  dark?: boolean;
 }
 
 export default function GoogleSignInButton({
   redirectTo = "/dashboard",
-  dark = false,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
@@ -69,13 +66,9 @@ export default function GoogleSignInButton({
       type="button"
       onClick={handleGoogle}
       disabled={loading}
-      className={
-        dark
-          ? "flex w-full items-center justify-center gap-3 border border-orwas-cream/30 bg-transparent py-4 text-[10px] uppercase tracking-[0.3em] text-orwas-cream transition-colors hover:bg-orwas-cream/10 disabled:opacity-60"
-          : "flex w-full items-center justify-center gap-3 border border-orwas-sand bg-white py-4 text-[10px] uppercase tracking-[0.3em] text-orwas-ink transition-colors hover:bg-orwas-mist disabled:opacity-60"
-      }
+      className="flex w-full items-center justify-center gap-3 rounded-sm border border-[#dadce0] bg-white py-3 text-sm font-medium text-[#3c4043] shadow-sm transition-colors hover:bg-[#f8f9fa] disabled:opacity-60"
     >
-      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="#4285F4"
           d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
