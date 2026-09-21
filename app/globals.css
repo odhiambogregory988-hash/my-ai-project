@@ -91,11 +91,27 @@
     transform: translateZ(0);
     backface-visibility: hidden;
   }
+
+  /* Announcement bar crossfade — CSS-only replacement for framer-motion */
+  .announcement-crossfade {
+    animation: announcement-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 }
 
 @keyframes reveal-up {
   to {
     opacity: 1;
     transform: translateY(0) translateZ(0);
+  }
+}
+
+@keyframes announcement-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

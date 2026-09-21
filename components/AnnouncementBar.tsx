@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 const MESSAGES = [
   "Complimentary delivery on orders over KSh 10,000",
@@ -9,6 +8,11 @@ const MESSAGES = [
   "Crafted in Kenya for the long walk ahead",
 ];
 
+/**
+ * Rotating storefront announcement bar.
+ * Pure CSS crossfade — no animation library, so this ships in the header chunk
+ * without pulling in framer-motion.
+ */
 export default function AnnouncementBar() {
   const [index, setIndex] = useState(0);
 
@@ -26,18 +30,12 @@ export default function AnnouncementBar() {
         <span className="hidden text-orwas-amber sm:inline" aria-hidden="true">
           ✦
         </span>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={index}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center text-[10px] uppercase tracking-[0.28em] text-orwas-cream gpu-layer"
-          >
-            {MESSAGES[index]}
-          </motion.p>
-        </AnimatePresence>
+        <p
+          key={index}
+          className="announcement-crossfade text-center text-[10px] uppercase tracking-[0.28em] text-orwas-cream"
+        >
+          {MESSAGES[index]}
+        </p>
         <span className="hidden text-orwas-amber sm:inline" aria-hidden="true">
           ✦
         </span>

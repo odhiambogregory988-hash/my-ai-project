@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useStore } from "@/components/StoreProvider";
-import CartDrawer from "@/components/CartDrawer";
 import AnnouncementBar from "@/components/AnnouncementBar";
+
+// The cart drawer (and its framer-motion bundle) only loads when the cart opens.
+const CartDrawer = dynamic(() => import("@/components/CartDrawer"), { ssr: false });
 
 const NAV_LINKS = [
   { label: "Shop", href: "/collections" },
