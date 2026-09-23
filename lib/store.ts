@@ -41,6 +41,9 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+export const FREE_SHIPPING_THRESHOLD = 10000;
+export const DELIVERY_FEE = 500;
+
 export const DEFAULT_PRODUCTS: Product[] = [
   { id: "1", name: "Clarks Desert Boot", price: 8500, collection: "Heritage", inventory: 15, category: "Footwear", image: "/collections/clark.jpeg", description: "British heritage footwear — iconic since 1950" },
   { id: "2", name: "Nairobi Street Style", price: 3500, collection: "Street", inventory: 8, category: "Clothing", image: "/collections/wakadinali.jpeg", description: "Urban culture meets contemporary fashion" },

@@ -44,6 +44,20 @@ export interface Order {
 const FREE_SHIPPING_THRESHOLD = 10000;
 const DELIVERY_FEE = 500;
 
+/**
+ * Unguessable order reference.
+ *
+ * Order numbers are the only thing protecting `track_order` (public, no login),
+ * which returns the customer's name, items and totals. The old format was
+ * `ORW-<timestamp><3 random digits>` — a few hundred possibilities per
+ * millisecond — so a stranger could have walked the keyspace and read other
+ * people's orders. This uses crypto randomness instead (48 bits).
+ */
+function newOrderNumber() {
+  const random = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+  return `ORW-${random}`;
+}
+
 /* ============================================================
    Mapping helpers (Supabase rows → app types)
    ============================================================ */
@@ -178,11 +192,11 @@ function demoChangePassword(id: string, current: string, nextPassword: string) {
   return { ok: true };
 }
 
-function demoCreateOrder(customerEmail: string, customerName: string, items: OrderItem[]) {
+function demoCreateOrder(customerEmail: string, customerName: string, items: OrderItem[], deliveryFeeOverride?: number) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE;
+  const deliveryFee = deliveryFeeOverride ?? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE);
   const order: Order = {
-    id: `ORW-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 900 + 100)}`,
+    id: newOrderNumber(),
     customerEmail,
     customerName,
     items,
@@ -400,12 +414,17 @@ export async function changePassword(id: string, current: string, nextPassword: 
   return { ok: true };
 }
 
-export async function createOrder(customer: Customer, items: OrderItem[]): Promise<Order> {
+export async function createOrder(
+  customer: Customer,
+  items: OrderItem[],
+  /** Optional pre-computed delivery fee (e.g. Express). Omitted = standard rule. */
+  options?: { deliveryFee?: number },
+): Promise<Order> {
   return withFallback(
     async () => {
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const deliveryFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE;
-      const orderNo = `ORW-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 900 + 100)}`;
+      const deliveryFee = options?.deliveryFee ?? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE);
+      const orderNo = newOrderNumber();
 
       const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase
@@ -426,7 +445,7 @@ export async function createOrder(customer: Customer, items: OrderItem[]): Promi
       if (error) throw new Error(error.message);
       return mapOrderRow(data as unknown as OrderRow);
     },
-    () => demoCreateOrder(customer.email, customer.name, items),
+    () => demoCreateOrder(customer.email, customer.name, items, options?.deliveryFee),
   );
 }
 

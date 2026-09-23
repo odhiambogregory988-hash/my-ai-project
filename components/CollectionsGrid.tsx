@@ -29,7 +29,7 @@ const EXPLORE_ITEMS = [
 
 const BRAND_COLLECTIONS = [
   {
-    id: "clark-desert-boot",
+    id: "1", // matches lib/store.ts DEFAULT_PRODUCTS
     name: "Clarks Desert Boot",
     description: "British heritage footwear — iconic since 1950",
     price: 8500,
@@ -44,7 +44,7 @@ const BRAND_COLLECTIONS = [
     category: "Footwear" as const,
   },
   {
-    id: "nairobi-street-style",
+    id: "2", // matches lib/store.ts DEFAULT_PRODUCTS
     name: "Nairobi Street Style",
     description: "Urban culture meets contemporary fashion",
     price: 3500,
@@ -59,7 +59,7 @@ const BRAND_COLLECTIONS = [
     category: "Clothing" as const,
   },
   {
-    id: "clarks-wallabee",
+    id: "3", // matches lib/store.ts DEFAULT_PRODUCTS
     name: "Clarks Wallabee",
     description: "Timeless suede silhouette — street culture staple",
     price: 7200,
@@ -74,7 +74,7 @@ const BRAND_COLLECTIONS = [
     category: "Footwear" as const,
   },
   {
-    id: "urban-essentials",
+    id: "4", // matches lib/store.ts DEFAULT_PRODUCTS
     name: "Urban Essentials",
     description: "Everyday pieces for the modern wardrobe",
     price: 2800,
@@ -89,7 +89,7 @@ const BRAND_COLLECTIONS = [
     category: "Clothing" as const,
   },
   {
-    id: "heritage-edit",
+    id: "5", // matches lib/store.ts DEFAULT_PRODUCTS
     name: "Heritage Edit",
     description: "Classic styles reimagined for today",
     price: 4500,
@@ -104,7 +104,7 @@ const BRAND_COLLECTIONS = [
     category: "Clothing" as const,
   },
   {
-    id: "street-culture",
+    id: "6c", // demo extra — Street Culture (not in store catalog)
     name: "Street Culture",
     description: "Nairobi-inspired contemporary wear",
     price: 3200,
@@ -119,7 +119,7 @@ const BRAND_COLLECTIONS = [
     category: "Clothing" as const,
   },
   {
-    id: "archive-collection",
+    id: "6b", // demo extra — Archive Collection
     name: "Archive Collection",
     description: "Rare finds and vintage pieces",
     price: 5500,
