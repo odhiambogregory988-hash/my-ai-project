@@ -41,8 +41,8 @@ export interface Order {
   createdAt: string;
 }
 
-const FREE_SHIPPING_THRESHOLD = 10000;
-const DELIVERY_FEE = 500;
+const FREE_SHIPPING_THRESHOLD = 10500;
+const DELIVERY_FEE = 125;
 
 /**
  * Unguessable order reference.

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const MESSAGES = [
-  "Complimentary delivery on orders over KSh 10,000",
+  "Complimentary delivery on orders over KSh 10,500",
   "New season — the Clarks Heritage Drop has landed",
   "Crafted in Kenya for the long walk ahead",
 ];
