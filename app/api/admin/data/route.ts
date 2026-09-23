@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookieName, isAdminTokenValid, isOwnerEmail } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
+/** The only statuses the admin UI offers — anything else is rejected. */
+const ORDER_STATUSES = ["Processing", "Shipped", "Delivered", "Cancelled"] as const;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface OrderRow {
   order_no: string;
   customer_email: string;
@@ -173,17 +178,23 @@ export async function POST(request: NextRequest) {
     }
     const { supabase, serviceRole } = client;
 
+    // Never trust the client's shape: reject anything that isn't a plain string.
+    const orderNo = typeof body.id === "string" ? body.id.trim() : "";
+    const status = typeof body.status === "string" ? body.status : "";
+
     switch (body.action) {
       case "update-order-status": {
-        const { error } = await supabase
-          .from("orders")
-          .update({ status: body.status })
-          .eq("order_no", body.id);
+        if (!orderNo) return NextResponse.json({ error: "Missing order number" }, { status: 400 });
+        if (!(ORDER_STATUSES as readonly string[]).includes(status)) {
+          return NextResponse.json({ error: "Unknown order status" }, { status: 400 });
+        }
+        const { error } = await supabase.from("orders").update({ status }).eq("order_no", orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
       case "delete-order": {
-        const { error } = await supabase.from("orders").delete().eq("order_no", body.id);
+        if (!orderNo) return NextResponse.json({ error: "Missing order number" }, { status: 400 });
+        const { error } = await supabase.from("orders").delete().eq("order_no", orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
@@ -194,7 +205,10 @@ export async function POST(request: NextRequest) {
             { status: 400 },
           );
         }
-        const { error } = await supabase.auth.admin.deleteUser(body.id ?? "");
+        if (!UUID_RE.test(orderNo)) {
+          return NextResponse.json({ error: "Missing customer id" }, { status: 400 });
+        }
+        const { error } = await supabase.auth.admin.deleteUser(orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
