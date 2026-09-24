@@ -13,13 +13,18 @@ import {
   CartItem,
   DEFAULT_PRODUCTS,
   detectCurrency,
-  loadProducts,
+  loadCatalog,
   Product,
-  PRODUCTS_STORAGE_KEY,
 } from "@/lib/store";
+
+/** "demo" = the catalog came from this browser, not Supabase. */
+export type CatalogMode = "loading" | "supabase" | "demo";
 
 interface StoreContextValue {
   products: Product[];
+  catalogMode: CatalogMode;
+  /** Re-read the catalog from Supabase (admin writes call this afterwards). */
+  refreshProducts: () => Promise<void>;
   cart: CartItem[];
   currency: string;
   locale: string;
@@ -34,7 +39,6 @@ interface StoreContextValue {
   updateQuantity: (id: string, quantity: number) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
-  saveProducts: (products: Product[]) => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -72,6 +76,7 @@ function mergeDuplicateLines(items: CartItem[]): CartItem[] {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  const [catalogMode, setCatalogMode] = useState<CatalogMode>("loading");
   const [cart, setCart] = useState<CartItem[]>([]);
   // False until the saved cart has been read from localStorage — lets pages
   // distinguish "cart genuinely empty" from "not hydrated yet" (used by /checkout).
@@ -116,8 +121,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persistCart(snapshot);
   }, [persistCart]);
 
+  /** Read the catalog — Supabase when configured, this browser otherwise. */
+  const refreshProducts = useCallback(async () => {
+    const { products: catalog, configured } = await loadCatalog();
+    setProducts(catalog);
+    setCatalogMode(configured ? "supabase" : "demo");
+  }, []);
+
   useEffect(() => {
-    setProducts(loadProducts());
+    refreshProducts().catch(() => {
+      setProducts(DEFAULT_PRODUCTS);
+      setCatalogMode("demo");
+    });
     setMoney(detectCurrency());
     try {
       const savedCart = window.localStorage.getItem("orwas-cart");
@@ -133,7 +148,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       hasLoadedCart.current = true;
       setCartReady(true);
     }
-  }, []);
+  }, [refreshProducts]);
 
   // Note: persistence happens inside each mutator via persistCart — there is
   // intentionally no write-effect on `cart` (see persistCart comment).
@@ -198,20 +213,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, [persistCart]);
 
-  const saveProducts = useCallback((nextProducts: Product[]) => {
-    setProducts(nextProducts);
-    try {
-      window.localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(nextProducts));
-    } catch {
-      // ignore
-    }
-  }, []);
-
   const cartCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
 
   const value = useMemo<StoreContextValue>(
     () => ({
       products,
+      catalogMode,
+      refreshProducts,
       cart,
       currency,
       locale,
@@ -223,10 +231,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateQuantity,
       removeFromCart,
       clearCart,
-      saveProducts,
     }),
     [
       products,
+      catalogMode,
+      refreshProducts,
       cart,
       currency,
       locale,
@@ -238,7 +247,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateQuantity,
       removeFromCart,
       clearCart,
-      saveProducts,
     ],
   );
 

@@ -3,9 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadCustomers, loadOrders, formatDate, Order } from "@/lib/accounts";
-import { loadProducts } from "@/lib/store";
+import { loadCatalog } from "@/lib/store";
+import { loadSeasons, publishedSeason } from "@/lib/season";
 
 const SECTIONS = [
+  {
+    href: "/admin/season",
+    label: "Seasonal collection",
+    description: "Curate the brand collection for this season and publish it to the storefront.",
+  },
   {
     href: "/admin/products",
     label: "Product management",
@@ -31,11 +37,16 @@ const SECTIONS = [
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({ products: 0, customers: 0, orders: 0, revenue: 0 });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [seasonName, setSeasonName] = useState("");
   const [mode, setMode] = useState<"supabase" | "demo">("supabase");
 
   useEffect(() => {
     (async () => {
-      const products = loadProducts();
+      const { products } = await loadCatalog();
+
+      loadSeasons()
+        .then(({ seasons }) => setSeasonName(publishedSeason(seasons).name))
+        .catch(() => {});
 
       const applyData = (customers: { length: number }, orders: Order[]) => {
         setStats({
@@ -86,6 +97,7 @@ export default function AdminDashboardPage() {
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
 
   const statCards = [
+    { label: "Season", value: seasonName || "—", href: "/admin/season" },
     { label: "Products", value: stats.products, href: "/admin/products" },
     { label: "Customers", value: stats.customers, href: "/admin/customers" },
     { label: "Orders", value: stats.orders, href: "/admin/orders" },
@@ -121,7 +133,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {statCards.map((card) => (
           <Link key={card.label} href={card.href} className="rounded-sm border border-orwas-sand/60 bg-white p-6 transition-shadow hover:shadow-[0_20px_50px_rgba(17,24,39,0.06)]">
             <p className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">{card.label}</p>
@@ -131,7 +143,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Management sections */}
-      <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {SECTIONS.map((section) => (
           <Link
             key={section.href}

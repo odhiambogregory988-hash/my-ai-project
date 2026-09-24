@@ -1,7 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import { cookieName, isAdminTokenValid, isOwnerEmail } from "@/lib/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { requireAdmin, resolveDataClient } from "@/lib/admin-server";
 
 /** The only statuses the admin UI offers — anything else is rejected. */
 const ORDER_STATUSES = ["Processing", "Shipped", "Delivered", "Cancelled"] as const;
@@ -20,15 +18,6 @@ interface OrderRow {
   created_at: string;
 }
 
-async function requireAdmin(request: NextRequest) {
-  const token = request.cookies.get(cookieName)?.value;
-  const valid = await isAdminTokenValid(token);
-  if (!valid) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
-
 function mapOrderRow(row: OrderRow) {
   return {
     id: row.order_no,
@@ -41,33 +30,6 @@ function mapOrderRow(row: OrderRow) {
     status: row.status,
     createdAt: row.created_at,
   };
-}
-
-/** Service-role client when the key exists, otherwise the signed-in Google admin's session + RLS. */
-async function resolveDataClient(request: NextRequest) {
-  try {
-    const supabase = createSupabaseAdminClient();
-    return { supabase, serviceRole: true };
-  } catch {
-    // Fallback: the admin's own Supabase session (set during Google sign-in).
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) return null;
-    const supabase = createServerClient(url, anon, {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: () => {},
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data: isAdmin } = await supabase.rpc("is_admin", { user_id: user.id });
-    // The owner is always recognized, even before the roster is seeded.
-    if (!isOwnerEmail(user.email) && !isAdmin) return null;
-    return { supabase, serviceRole: false };
-  }
 }
 
 export async function GET(request: NextRequest) {

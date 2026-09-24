@@ -5,6 +5,9 @@ import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import { useStore } from "@/components/StoreProvider";
+import { Product } from "@/lib/store";
+import { resolveSeasonItem } from "@/lib/season";
+import { usePublishedSeason } from "@/lib/usePublishedSeason";
 
 const EXPLORE_ITEMS = [
   {
@@ -27,129 +30,16 @@ const EXPLORE_ITEMS = [
   },
 ];
 
-const BRAND_COLLECTIONS = [
-  {
-    id: "1", // matches lib/store.ts DEFAULT_PRODUCTS
-    name: "Clarks Desert Boot",
-    description: "British heritage footwear — iconic since 1950",
-    price: 8500,
-    originalPrice: 12000,
-    stock: "in-stock",
-    stockCount: 15,
-    delivery: "24hr",
-    badge: "Best Seller",
-    image: "/collections/clark.jpeg",
-    collection: "Heritage",
-    inventory: 15,
-    category: "Footwear" as const,
-  },
-  {
-    id: "2", // matches lib/store.ts DEFAULT_PRODUCTS
-    name: "Nairobi Street Style",
-    description: "Urban culture meets contemporary fashion",
-    price: 3500,
-    originalPrice: 5000,
-    stock: "in-stock",
-    stockCount: 8,
-    delivery: "24hr",
-    badge: "New Arrival",
-    image: "/collections/wakadinali.jpeg",
-    collection: "Street",
-    inventory: 8,
-    category: "Clothing" as const,
-  },
-  {
-    id: "3", // matches lib/store.ts DEFAULT_PRODUCTS
-    name: "Clarks Wallabee",
-    description: "Timeless suede silhouette — street culture staple",
-    price: 7200,
-    originalPrice: null,
-    stock: "in-stock",
-    stockCount: 3,
-    delivery: "48hr",
-    badge: "Limited",
-    image: "/collections/clark-2.jpeg",
-    collection: "Heritage",
-    inventory: 3,
-    category: "Footwear" as const,
-  },
-  {
-    id: "4", // matches lib/store.ts DEFAULT_PRODUCTS
-    name: "Urban Essentials",
-    description: "Everyday pieces for the modern wardrobe",
-    price: 2800,
-    originalPrice: 3500,
-    stock: "in-stock",
-    stockCount: 22,
-    delivery: "24hr",
-    badge: "Popular",
-    image: "/collections/collection-1.jpeg",
-    collection: "Essentials",
-    inventory: 22,
-    category: "Clothing" as const,
-  },
-  {
-    id: "5", // matches lib/store.ts DEFAULT_PRODUCTS
-    name: "Heritage Edit",
-    description: "Classic styles reimagined for today",
-    price: 4500,
-    originalPrice: null,
-    stock: "low-stock",
-    stockCount: 2,
-    delivery: "48hr",
-    badge: "Almost Gone",
-    image: "/collections/collection-2.jpeg",
-    collection: "Heritage",
-    inventory: 2,
-    category: "Clothing" as const,
-  },
-  {
-    id: "6c", // demo extra — Street Culture (not in store catalog)
-    name: "Street Culture",
-    description: "Nairobi-inspired contemporary wear",
-    price: 3200,
-    originalPrice: 4000,
-    stock: "out-of-stock",
-    stockCount: 0,
-    delivery: "-",
-    badge: "Sold Out",
-    image: "/collections/collection-3.jpeg",
-    collection: "Street",
-    inventory: 0,
-    category: "Clothing" as const,
-  },
-  {
-    id: "6b", // demo extra — Archive Collection
-    name: "Archive Collection",
-    description: "Rare finds and vintage pieces",
-    price: 5500,
-    originalPrice: null,
-    stock: "in-stock",
-    stockCount: 6,
-    delivery: "48hr",
-    badge: "Exclusive",
-    image: "/collections/collection-4.jpeg",
-    collection: "Archive",
-    inventory: 6,
-    category: "Clothing" as const,
-  },
-];
-
 export default function CollectionsGrid() {
-  const { addToCart } = useStore();
+  const { addToCart, products } = useStore();
+  const { season } = usePublishedSeason();
 
-  const handleAddToCart = (product: typeof BRAND_COLLECTIONS[0]) => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      collection: product.collection,
-      inventory: product.inventory,
-      category: product.category,
-      description: product.description,
-      image: product.image,
-    });
-  };
+  const pieces = season.items.map((item) => ({
+    item,
+    product: resolveSeasonItem(item, products),
+  }));
+
+  const handleAddToCart = (product: Product) => addToCart(product);
 
   return (
     <Section label="Explore" className="py-section bg-orwas-cream content-auto">
@@ -191,116 +81,161 @@ export default function CollectionsGrid() {
           ))}
         </div>
 
-        {/* Brand Collections */}
+        {/* Brand Collections — the season the admin has published. */}
         <div className="mt-16">
-          <h3 className="text-display-md font-display text-orwas-ink mb-8 reveal">
-            Brand <span className="text-orwas-clay italic">Collections</span>
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {BRAND_COLLECTIONS.map((item, index) => (
-              <div
-                key={index}
-                className="group relative aspect-[3/4] overflow-hidden rounded-sm bg-orwas-sand/30 reveal transition-transform duration-500 hover:-translate-y-1"
-              >
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink/70 via-orwas-ink/10 to-transparent opacity-90" />
-                
-                {/* Badge */}
-                {item.badge && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className={`inline-block px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded-sm ${
-                      item.badge === 'Sold Out' ? 'bg-orwas-ink/80 text-orwas-cream' :
-                      item.badge === 'Almost Gone' ? 'bg-orwas-amber/90 text-orwas-ink' :
-                      item.badge === 'Best Seller' ? 'bg-orwas-amber text-orwas-ink' :
-                      'bg-orwas-cream/90 text-orwas-ink'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  </div>
-                )}
-                
-                {/* Stock Status */}
-                <div className="absolute top-3 right-3 z-10">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium ${
-                    item.stock === 'in-stock' ? 'bg-green-500/90 text-white' :
-                    item.stock === 'low-stock' ? 'bg-yellow-500/90 text-orwas-ink' :
-                    'bg-red-500/90 text-white'
-                  }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${
-                      item.stock === 'in-stock' ? 'bg-white' :
-                      item.stock === 'low-stock' ? 'bg-orwas-ink' :
-                      'bg-white'
-                    }`} />
-                    {item.stock === 'in-stock' ? 'In Stock' :
-                     item.stock === 'low-stock' ? `Only ${item.stockCount} left` :
-                     'Out of Stock'}
-                  </div>
-                </div>
-                
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h4 className="font-display text-xl text-orwas-cream mb-1">
-                    {item.name}
-                  </h4>
-                  <p className="text-orwas-cream/75 text-xs mb-2">
-                    {item.description}
-                  </p>
-                  
-                  {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-orwas-cream font-medium">
-                      KSh {item.price.toLocaleString()}
-                    </span>
-                    {item.originalPrice && (
-                      <span className="text-orwas-cream/50 text-xs line-through">
-                        KSh {item.originalPrice.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Delivery */}
-                  <div className="flex items-center gap-1 mb-3">
-                    <svg className="w-3 h-3 text-orwas-amber" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
-                    </svg>
-                    <span className="text-orwas-cream/80 text-[10px]">
-                      {item.delivery === '24hr' ? '24hr Delivery' :
-                       item.delivery === '48hr' ? '48hr Delivery' :
-                       'Delivery unavailable'}
-                    </span>
-                  </div>
-                  
-                  {/* Quick Action Buttons */}
-                  {item.stock !== 'out-of-stock' ? (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleAddToCart(item)}
-                        className="flex-1 bg-orwas-amber hover:bg-orwas-amber-light text-orwas-ink text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm transition-colors duration-300"
-                      >
-                        Add to Cart
-                      </button>
-                      <button 
-                        onClick={() => handleAddToCart(item)}
-                        className="bg-orwas-cream/20 hover:bg-orwas-cream/30 text-orwas-cream text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm transition-colors duration-300"
-                      >
-                        Quick Buy
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="w-full bg-orwas-ink/50 text-orwas-cream/50 text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm cursor-not-allowed">
-                      Notify Me
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="mb-2 text-[10px] uppercase tracking-[0.24em] text-orwas-amber">
+                {season.name}
+              </p>
+              <h3 className="text-display-md font-display text-orwas-ink">
+                Brand <span className="text-orwas-clay italic">Collections</span>
+              </h3>
+              {season.headline && (
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-orwas-clay">
+                  {season.headline}
+                </p>
+              )}
+            </div>
+            <Button href="/collections" variant="underline" className="self-start md:self-auto">
+              Shop the season →
+            </Button>
           </div>
+
+          {season.heroImage && (
+            <div className="reveal relative mb-6 aspect-[21/9] overflow-hidden rounded-sm bg-orwas-sand/30">
+              <Image
+                src={season.heroImage}
+                alt={`${season.name} campaign`}
+                fill
+                sizes="100vw"
+                unoptimized={season.heroImage.startsWith("data:")}
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink/60 via-orwas-ink/10 to-transparent" />
+              <p className="absolute bottom-5 left-6 font-display text-display-md text-orwas-cream">
+                {season.name}
+              </p>
+            </div>
+          )}
+
+          {pieces.length === 0 ? (
+            <p className="rounded-sm border border-orwas-clay/10 bg-orwas-ivory px-8 py-12 text-center text-sm text-orwas-clay">
+              This season&apos;s edit is being finalised — check back shortly.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              {pieces.map(({ item, product }) => {
+                const stock = product.inventory <= 0 ? "out" : product.inventory <= 3 ? "low" : "in";
+
+                return (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-[3/4] overflow-hidden rounded-sm bg-orwas-sand/30 reveal transition-transform duration-500 hover:-translate-y-1"
+                  >
+                    <Image
+                      src={product.image || "/collections/collection-1.jpeg"}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      unoptimized={(product.image ?? "").startsWith("data:")}
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink/70 via-orwas-ink/10 to-transparent opacity-90" />
+
+                    {/* Badge */}
+                    {item.badge && (
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className={`inline-block px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded-sm ${
+                          item.badge === "Sold Out" ? "bg-orwas-ink/80 text-orwas-cream"
+                          : item.badge === "Almost Gone" ? "bg-orwas-amber/90 text-orwas-ink"
+                          : item.badge === "Best Seller" ? "bg-orwas-amber text-orwas-ink"
+                          : "bg-orwas-cream/90 text-orwas-ink"
+                        }`}>
+                          {item.badge}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Stock status — read live from the catalog when the piece is linked. */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-medium ${
+                        stock === "in" ? "bg-green-500/90 text-white"
+                        : stock === "low" ? "bg-yellow-500/90 text-orwas-ink"
+                        : "bg-red-500/90 text-white"
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          stock === "in" ? "bg-white" : stock === "low" ? "bg-orwas-ink" : "bg-white"
+                        }`} />
+                        {stock === "in" ? "In Stock" : stock === "low" ? `Only ${product.inventory} left` : "Out of Stock"}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h4 className="font-display text-lg text-orwas-cream mb-1 line-clamp-2 md:text-xl">
+                        {product.name}
+                      </h4>
+                      {(item.description || product.description) && (
+                        <p className="mb-2 line-clamp-1 text-xs text-orwas-cream/75">
+                          {item.description || product.description}
+                        </p>
+                      )}
+
+                      {/* Price */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-orwas-cream font-medium">
+                          KSh {product.price.toLocaleString()}
+                        </span>
+                        {item.originalPrice && item.originalPrice > product.price && (
+                          <span className="text-orwas-cream/50 text-xs line-through">
+                            KSh {item.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Delivery */}
+                      {item.delivery && (
+                        <div className="flex items-center gap-1 mb-3">
+                          <svg className="w-3 h-3 text-orwas-amber" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
+                          </svg>
+                          <span className="text-orwas-cream/80 text-[10px]">
+                            {item.delivery} Delivery
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      {stock !== "out" ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAddToCart(product)}
+                            className="flex-1 bg-orwas-amber hover:bg-orwas-amber-light text-orwas-ink text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm transition-colors duration-300"
+                          >
+                            Add to Cart
+                          </button>
+                          <Link
+                            href={`/products/${product.id}`}
+                            className="bg-orwas-cream/20 hover:bg-orwas-cream/30 text-orwas-cream text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm transition-colors duration-300"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="block w-full bg-orwas-ink/50 text-orwas-cream/70 text-center text-[10px] font-medium uppercase tracking-wider py-2 px-3 rounded-sm transition-colors hover:bg-orwas-ink/70"
+                        >
+                          View Piece
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </Section>

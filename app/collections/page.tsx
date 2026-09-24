@@ -78,8 +78,17 @@ export default function CollectionsPage() {
 
           {visibleProducts.length === 0 && (
             <div className="rounded-sm border border-orwas-sand/60 bg-white px-8 py-16 text-center">
-              <p className="font-display text-2xl text-orwas-ink">Nothing matches “{search}”.</p>
-              <p className="mt-2 text-sm text-orwas-clay">Try a different search or clear the filters.</p>
+              {products.length === 0 ? (
+                <>
+                  <p className="font-display text-2xl text-orwas-ink">The shop is being restocked.</p>
+                  <p className="mt-2 text-sm text-orwas-clay">New pieces will appear here shortly.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-2xl text-orwas-ink">Nothing matches “{search}”.</p>
+                  <p className="mt-2 text-sm text-orwas-clay">Try a different search or clear the filters.</p>
+                </>
+              )}
             </div>
           )}
 
