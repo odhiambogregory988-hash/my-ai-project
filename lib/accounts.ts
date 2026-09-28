@@ -10,6 +10,8 @@ export interface Customer {
   name: string;
   email: string;
   address: string;
+  /** Age in years, as entered at sign-up (optional on older accounts). */
+  age?: number;
   createdAt: string;
   /** "google" | "email" — how the customer signed in (Supabase mode only). */
   provider?: string;
@@ -95,8 +97,9 @@ function mapCustomer(
   address: string,
   createdAt: string,
   avatarUrl = "",
+  age?: number | null,
 ): Customer {
-  return { id, email, name, address, createdAt, avatarUrl };
+  return { id, email, name, address, createdAt, avatarUrl, ...(age != null ? { age } : {}) };
 }
 
 /* ============================================================
@@ -143,10 +146,13 @@ function demoSaveOrders(orders: Order[]) {
   window.localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
 }
 
-function demoRegister(name: string, email: string, password: string) {
+function demoRegister(name: string, email: string, password: string, age?: number) {
   const cleanEmail = email.trim().toLowerCase();
   if (!name.trim() || !cleanEmail || !password) return { ok: false, message: "Please fill in all fields." };
   if (password.length < 6) return { ok: false, message: "Password must be at least 6 characters." };
+  if (age == null || !Number.isFinite(age) || age < 13 || age > 120) {
+    return { ok: false, message: "Age must be between 13 and 120." };
+  }
   if (demoLoadCustomers().some((c) => c.email.toLowerCase() === cleanEmail)) {
     return { ok: false, message: "An account with this email already exists. Try signing in." };
   }
@@ -155,6 +161,7 @@ function demoRegister(name: string, email: string, password: string) {
     name: name.trim(),
     email: cleanEmail,
     address: "",
+    age,
     createdAt: new Date().toISOString(),
   };
   demoSaveCustomers([...demoLoadCustomers(), { ...customer, passwordHash: hashPassword(password) } as never]);
@@ -234,15 +241,19 @@ async function withFallback<T>(supabaseFn: () => Promise<T>, demoFn: () => T): P
    Public API (used by pages)
    ============================================================ */
 
-export async function registerCustomer(name: string, email: string, password: string) {
+export async function registerCustomer(name: string, email: string, password: string, age?: number) {
   if (!isSupabaseConfigured()) return demoRegister(name, email, password);
+
+  if (age == null || !Number.isFinite(age) || age < 13 || age > 120) {
+    return { ok: false as const, message: "Age must be between 13 and 120." };
+  }
 
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name: name.trim() },
+      data: { name: name.trim(), age },
       emailRedirectTo: `${window.location.origin}/dashboard`,
     },
   });
@@ -261,7 +272,7 @@ export async function registerCustomer(name: string, email: string, password: st
 
   return {
     ok: true,
-    customer: mapCustomer(data.user.id, data.user.email ?? email, name.trim(), "", data.user.created_at),
+    customer: mapCustomer(data.user.id, data.user.email ?? email, name.trim(), "", data.user.created_at, "", age),
   };
 }
 
@@ -292,7 +303,7 @@ export async function loginCustomer(email: string, password: string) {
   const user = data.user;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name,address,avatar_url")
+    .select("name,address,avatar_url,age")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -305,6 +316,7 @@ export async function loginCustomer(email: string, password: string) {
       profile?.address ?? "",
       user.created_at,
       profile?.avatar_url ?? "",
+      profile?.age ?? null,
     ),
   };
 }
@@ -336,7 +348,7 @@ export async function getSession(): Promise<Customer | null> {
 
   let { data: profile } = await supabase
     .from("profiles")
-    .select("name,address,avatar_url")
+    .select("name,address,avatar_url,age")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -348,7 +360,7 @@ export async function getSession(): Promise<Customer | null> {
     const { data: inserted } = await supabase
       .from("profiles")
       .upsert({ id: user.id, name: fallbackName })
-      .select("name,address,avatar_url")
+      .select("name,address,avatar_url,age")
       .maybeSingle();
     profile = inserted ?? null;
   }
@@ -360,6 +372,7 @@ export async function getSession(): Promise<Customer | null> {
     profile?.address ?? "",
     user.created_at,
     profile?.avatar_url ?? "",
+    profile?.age ?? null,
   );
 
   // Google users: fall back to Google's own avatar until they upload one.
