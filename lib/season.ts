@@ -404,7 +404,10 @@ export async function loadSeasons(): Promise<SeasonStore> {
       const seasons = data.seasons
         .map(parseSeason)
         .filter((season: Season | null): season is Season => season !== null);
-      if (seasons.length) return { seasons, configured: true };
+      // An empty archive is still a working Supabase store — the admin simply
+      // hasn't created a season yet. Treating it as "not configured" here used
+      // to show a false "run supabase/season.sql" banner.
+      return { seasons, configured: true };
     }
   } catch {
     // fall through to the browser demo store
