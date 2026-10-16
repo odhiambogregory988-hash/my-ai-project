@@ -1,6 +1,22 @@
 import type { Metadata } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/components/StoreProvider";
+import CartToast from "@/components/CartToast";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["300", "400", "500", "600"],
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Orwa Sole Co. — Premium Footwear",
@@ -14,8 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body><StoreProvider>{children}</StoreProvider></body>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+      <body>
+        <StoreProvider>
+          {children}
+          <CartToast />
+        </StoreProvider>
+      </body>
     </html>
   );
 }

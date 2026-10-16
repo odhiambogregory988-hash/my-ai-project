@@ -10,6 +10,8 @@ export interface Customer {
   name: string;
   email: string;
   address: string;
+  /** Age in years, as entered at sign-up (optional on older accounts). */
+  age?: number;
   createdAt: string;
   /** "google" | "email" — how the customer signed in (Supabase mode only). */
   provider?: string;
@@ -41,8 +43,22 @@ export interface Order {
   createdAt: string;
 }
 
-const FREE_SHIPPING_THRESHOLD = 10000;
-const DELIVERY_FEE = 500;
+const FREE_SHIPPING_THRESHOLD = 10500;
+const DELIVERY_FEE = 125;
+
+/**
+ * Unguessable order reference.
+ *
+ * Order numbers are the only thing protecting `track_order` (public, no login),
+ * which returns the customer's name, items and totals. The old format was
+ * `ORW-<timestamp><3 random digits>` — a few hundred possibilities per
+ * millisecond — so a stranger could have walked the keyspace and read other
+ * people's orders. This uses crypto randomness instead (48 bits).
+ */
+function newOrderNumber() {
+  const random = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+  return `ORW-${random}`;
+}
 
 /* ============================================================
    Mapping helpers (Supabase rows → app types)
@@ -81,8 +97,9 @@ function mapCustomer(
   address: string,
   createdAt: string,
   avatarUrl = "",
+  age?: number | null,
 ): Customer {
-  return { id, email, name, address, createdAt, avatarUrl };
+  return { id, email, name, address, createdAt, avatarUrl, ...(age != null ? { age } : {}) };
 }
 
 /* ============================================================
@@ -129,10 +146,13 @@ function demoSaveOrders(orders: Order[]) {
   window.localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
 }
 
-function demoRegister(name: string, email: string, password: string) {
+function demoRegister(name: string, email: string, password: string, age?: number) {
   const cleanEmail = email.trim().toLowerCase();
   if (!name.trim() || !cleanEmail || !password) return { ok: false, message: "Please fill in all fields." };
   if (password.length < 6) return { ok: false, message: "Password must be at least 6 characters." };
+  if (age == null || !Number.isFinite(age) || age < 13 || age > 120) {
+    return { ok: false, message: "Age must be between 13 and 120." };
+  }
   if (demoLoadCustomers().some((c) => c.email.toLowerCase() === cleanEmail)) {
     return { ok: false, message: "An account with this email already exists. Try signing in." };
   }
@@ -141,6 +161,7 @@ function demoRegister(name: string, email: string, password: string) {
     name: name.trim(),
     email: cleanEmail,
     address: "",
+    age,
     createdAt: new Date().toISOString(),
   };
   demoSaveCustomers([...demoLoadCustomers(), { ...customer, passwordHash: hashPassword(password) } as never]);
@@ -178,11 +199,11 @@ function demoChangePassword(id: string, current: string, nextPassword: string) {
   return { ok: true };
 }
 
-function demoCreateOrder(customerEmail: string, customerName: string, items: OrderItem[]) {
+function demoCreateOrder(customerEmail: string, customerName: string, items: OrderItem[], deliveryFeeOverride?: number) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE;
+  const deliveryFee = deliveryFeeOverride ?? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE);
   const order: Order = {
-    id: `ORW-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 900 + 100)}`,
+    id: newOrderNumber(),
     customerEmail,
     customerName,
     items,
@@ -220,15 +241,19 @@ async function withFallback<T>(supabaseFn: () => Promise<T>, demoFn: () => T): P
    Public API (used by pages)
    ============================================================ */
 
-export async function registerCustomer(name: string, email: string, password: string) {
+export async function registerCustomer(name: string, email: string, password: string, age?: number) {
   if (!isSupabaseConfigured()) return demoRegister(name, email, password);
+
+  if (age == null || !Number.isFinite(age) || age < 13 || age > 120) {
+    return { ok: false as const, message: "Age must be between 13 and 120." };
+  }
 
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name: name.trim() },
+      data: { name: name.trim(), age },
       emailRedirectTo: `${window.location.origin}/dashboard`,
     },
   });
@@ -247,7 +272,7 @@ export async function registerCustomer(name: string, email: string, password: st
 
   return {
     ok: true,
-    customer: mapCustomer(data.user.id, data.user.email ?? email, name.trim(), "", data.user.created_at),
+    customer: mapCustomer(data.user.id, data.user.email ?? email, name.trim(), "", data.user.created_at, "", age),
   };
 }
 
@@ -266,7 +291,7 @@ export async function loginCustomer(email: string, password: string) {
   }
 
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
   if (error) {
     const message = error.message.toLowerCase().includes("not confirmed")
@@ -278,7 +303,7 @@ export async function loginCustomer(email: string, password: string) {
   const user = data.user;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name,address,avatar_url")
+    .select("name,address,avatar_url,age")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -291,6 +316,7 @@ export async function loginCustomer(email: string, password: string) {
       profile?.address ?? "",
       user.created_at,
       profile?.avatar_url ?? "",
+      profile?.age ?? null,
     ),
   };
 }
@@ -322,7 +348,7 @@ export async function getSession(): Promise<Customer | null> {
 
   let { data: profile } = await supabase
     .from("profiles")
-    .select("name,address,avatar_url")
+    .select("name,address,avatar_url,age")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -334,7 +360,7 @@ export async function getSession(): Promise<Customer | null> {
     const { data: inserted } = await supabase
       .from("profiles")
       .upsert({ id: user.id, name: fallbackName })
-      .select("name,address,avatar_url")
+      .select("name,address,avatar_url,age")
       .maybeSingle();
     profile = inserted ?? null;
   }
@@ -346,6 +372,7 @@ export async function getSession(): Promise<Customer | null> {
     profile?.address ?? "",
     user.created_at,
     profile?.avatar_url ?? "",
+    profile?.age ?? null,
   );
 
   // Google users: fall back to Google's own avatar until they upload one.
@@ -400,12 +427,17 @@ export async function changePassword(id: string, current: string, nextPassword: 
   return { ok: true };
 }
 
-export async function createOrder(customer: Customer, items: OrderItem[]): Promise<Order> {
+export async function createOrder(
+  customer: Customer,
+  items: OrderItem[],
+  /** Optional pre-computed delivery fee (e.g. Express). Omitted = standard rule. */
+  options?: { deliveryFee?: number },
+): Promise<Order> {
   return withFallback(
     async () => {
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const deliveryFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE;
-      const orderNo = `ORW-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 900 + 100)}`;
+      const deliveryFee = options?.deliveryFee ?? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE);
+      const orderNo = newOrderNumber();
 
       const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase
@@ -426,7 +458,7 @@ export async function createOrder(customer: Customer, items: OrderItem[]): Promi
       if (error) throw new Error(error.message);
       return mapOrderRow(data as unknown as OrderRow);
     },
-    () => demoCreateOrder(customer.email, customer.name, items),
+    () => demoCreateOrder(customer.email, customer.name, items, options?.deliveryFee),
   );
 }
 

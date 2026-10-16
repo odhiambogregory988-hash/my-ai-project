@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "@/components/ui/Button";
 
@@ -33,10 +34,10 @@ export default function VideoShowcase() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 500);
     return () => clearTimeout(timer);
-  });
+  }, []);
 
   return (
     <section className="relative h-screen min-h-[600px] overflow-hidden bg-orwas-ink">
@@ -44,20 +45,40 @@ export default function VideoShowcase() {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeChapter}
-          initial={{ opacity: 0, scale: 1.1 }}
+          initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0"
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 gpu-layer"
         >
-          <img
+          <Image
             src={STORY_CHAPTERS[activeChapter].image}
             alt={STORY_CHAPTERS[activeChapter].title}
-            className="w-full h-full object-cover"
+            fill
+            priority={activeChapter === 0}
+            sizes="100vw"
+            quality={85}
+            className="object-cover"
             onLoad={() => setImageLoaded(true)}
           />
         </motion.div>
       </AnimatePresence>
+
+      {/* Preload other chapters for instantaneous switching */}
+      <div className="hidden" aria-hidden="true">
+        {STORY_CHAPTERS.map((chapter, i) =>
+          i !== activeChapter ? (
+            <Image
+              key={chapter.id}
+              src={chapter.image}
+              alt=""
+              width={1}
+              height={1}
+              loading="eager"
+            />
+          ) : null
+        )}
+      </div>
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-orwas-ink via-orwas-ink/40 to-orwas-ink/60" />
@@ -100,7 +121,7 @@ export default function VideoShowcase() {
               className="text-center max-w-2xl"
             >
               <p className="text-orwas-amber text-xs tracking-[0.3em] uppercase mb-4">
-                Chapter {STORY_CHAPTERS[activeChapter].id} — {STORY_CHAPTERS[activeChapter].subtitle}
+                Chapter {activeChapter + 1} — {STORY_CHAPTERS[activeChapter].subtitle}
               </p>
               <h3 className="text-display-lg font-display text-orwas-cream mb-6">
                 {STORY_CHAPTERS[activeChapter].title}

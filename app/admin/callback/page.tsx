@@ -22,11 +22,17 @@ export default function AdminCallbackPage() {
 
       // No code — a plain visit or an OAuth failure/cancellation.
       if (!code) {
-        setMessage(
-          providerError
-            ? `Google sign-in was not completed: ${decodeURIComponent(providerError)}`
-            : "Nothing to validate — start from the sign-in page.",
-        );
+        if (providerError && /exchange external code/i.test(providerError)) {
+          setMessage(
+            "Google sign-in failed at the final step. If this happens every time, the Google client secret in your Supabase dashboard doesn't match Google Cloud Console — re-paste it under Authentication → Providers → Google. If it happened once, the code was simply reused — sign in again.",
+          );
+        } else {
+          setMessage(
+            providerError
+              ? `Google sign-in was not completed: ${decodeURIComponent(providerError)}`
+              : "Nothing to validate — start from the sign-in page.",
+          );
+        }
         setDone(true);
         return;
       }

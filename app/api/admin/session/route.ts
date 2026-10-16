@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import { cookieName, createAdminToken, isOwnerEmail } from "@/lib/auth";
+import { cookieName, createAdminToken, isOwnerEmail, ADMIN_SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 // Called by /admin/login after the browser client has exchanged the PKCE code.
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 8,
+      maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
       ...options,
     });
   });
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
   });
   return response;
 }

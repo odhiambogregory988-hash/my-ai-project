@@ -1,7 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import { cookieName, isAdminTokenValid, isOwnerEmail } from "@/lib/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { requireAdmin, resolveDataClient } from "@/lib/admin-server";
+
+/** The only statuses the admin UI offers — anything else is rejected. */
+const ORDER_STATUSES = ["Processing", "Shipped", "Delivered", "Cancelled"] as const;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface OrderRow {
   order_no: string;
@@ -13,15 +16,6 @@ interface OrderRow {
   total: number;
   status: string;
   created_at: string;
-}
-
-async function requireAdmin(request: NextRequest) {
-  const token = request.cookies.get(cookieName)?.value;
-  const valid = await isAdminTokenValid(token);
-  if (!valid) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
 }
 
 function mapOrderRow(row: OrderRow) {
@@ -36,33 +30,6 @@ function mapOrderRow(row: OrderRow) {
     status: row.status,
     createdAt: row.created_at,
   };
-}
-
-/** Service-role client when the key exists, otherwise the signed-in Google admin's session + RLS. */
-async function resolveDataClient(request: NextRequest) {
-  try {
-    const supabase = createSupabaseAdminClient();
-    return { supabase, serviceRole: true };
-  } catch {
-    // Fallback: the admin's own Supabase session (set during Google sign-in).
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) return null;
-    const supabase = createServerClient(url, anon, {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: () => {},
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data: isAdmin } = await supabase.rpc("is_admin", { user_id: user.id });
-    // The owner is always recognized, even before the roster is seeded.
-    if (!isOwnerEmail(user.email) && !isAdmin) return null;
-    return { supabase, serviceRole: false };
-  }
 }
 
 export async function GET(request: NextRequest) {
@@ -173,17 +140,23 @@ export async function POST(request: NextRequest) {
     }
     const { supabase, serviceRole } = client;
 
+    // Never trust the client's shape: reject anything that isn't a plain string.
+    const orderNo = typeof body.id === "string" ? body.id.trim() : "";
+    const status = typeof body.status === "string" ? body.status : "";
+
     switch (body.action) {
       case "update-order-status": {
-        const { error } = await supabase
-          .from("orders")
-          .update({ status: body.status })
-          .eq("order_no", body.id);
+        if (!orderNo) return NextResponse.json({ error: "Missing order number" }, { status: 400 });
+        if (!(ORDER_STATUSES as readonly string[]).includes(status)) {
+          return NextResponse.json({ error: "Unknown order status" }, { status: 400 });
+        }
+        const { error } = await supabase.from("orders").update({ status }).eq("order_no", orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
       case "delete-order": {
-        const { error } = await supabase.from("orders").delete().eq("order_no", body.id);
+        if (!orderNo) return NextResponse.json({ error: "Missing order number" }, { status: 400 });
+        const { error } = await supabase.from("orders").delete().eq("order_no", orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }
@@ -194,7 +167,10 @@ export async function POST(request: NextRequest) {
             { status: 400 },
           );
         }
-        const { error } = await supabase.auth.admin.deleteUser(body.id ?? "");
+        if (!UUID_RE.test(orderNo)) {
+          return NextResponse.json({ error: "Missing customer id" }, { status: 400 });
+        }
+        const { error } = await supabase.auth.admin.deleteUser(orderNo);
         if (error) throw new Error(error.message);
         return NextResponse.json({ ok: true });
       }

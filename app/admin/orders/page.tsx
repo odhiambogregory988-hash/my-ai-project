@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   formatDate,
@@ -15,11 +16,17 @@ import {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [mode, setMode] = useState<"supabase" | "demo">("supabase");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch("/api/admin/data");
+        if (res.status === 401) {
+          // Admin session expired — send to sign-in instead of showing a dead page.
+          window.location.assign("/admin/login?from=/admin/orders");
+          return;
+        }
         const data = await res.json();
         if (data.configured) {
           setMode("supabase");
@@ -30,7 +37,11 @@ export default function AdminOrdersPage() {
         // fall through to demo
       }
       setMode("demo");
-      setOrders(await loadOrders());
+      try {
+        setOrders(await loadOrders());
+      } catch {
+        setLoadError("Could not load orders. Refresh the page to try again.");
+      }
     })();
   }, []);
 
@@ -85,6 +96,12 @@ export default function AdminOrdersPage() {
         </div>
       </header>
 
+      {loadError && (
+        <p role="alert" className="mb-8 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+          {loadError}
+        </p>
+      )}
+
       {mode === "demo" && (
         <div className="mb-8 border border-orwas-amber/40 bg-orwas-amber/10 px-5 py-4 text-sm text-orwas-ink">
           <p className="font-medium">Browser demo mode</p>
@@ -137,7 +154,7 @@ export default function AdminOrdersPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 px-6 py-3">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-12 w-10 shrink-0 rounded-sm object-cover" />
+                      <Image src={item.image} alt={item.name} width={40} height={48} className="h-12 w-10 shrink-0 rounded-sm object-cover" />
                     ) : (
                       <div className="h-12 w-10 shrink-0 rounded-sm bg-orwas-mist" />
                     )}

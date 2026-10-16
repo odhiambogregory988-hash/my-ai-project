@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { findOrder, formatDate, loadCustomers, Order } from "@/lib/accounts";
@@ -138,7 +139,7 @@ export default function TrackPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-14 w-12 shrink-0 rounded-sm object-cover" />
+                      <Image src={item.image} alt={item.name} width={48} height={56} className="h-14 w-12 shrink-0 rounded-sm object-cover" />
                     ) : (
                       <div className="h-14 w-12 shrink-0 rounded-sm bg-orwas-mist" />
                     )}

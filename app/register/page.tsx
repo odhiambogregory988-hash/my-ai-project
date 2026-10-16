@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [age, setAge] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     setLoading(true);
     setMessage("");
 
-    const result = await registerCustomer(name, email, password);
+    const result = await registerCustomer(name, email, password, age === "" ? undefined : Number(age));
 
     if (result.ok && result.customer) {
       // Straight to the customer home page.
@@ -100,6 +101,20 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Jane Doe"
+                className="mt-2 w-full border-b border-orwas-sand bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-orwas-amber"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay">Age</span>
+              <input
+                required
+                type="number"
+                min={13}
+                max={120}
+                inputMode="numeric"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="e.g. 25"
                 className="mt-2 w-full border-b border-orwas-sand bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-orwas-amber"
               />
             </label>

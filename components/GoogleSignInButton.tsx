@@ -6,15 +6,14 @@ import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabas
 interface GoogleSignInButtonProps {
   /** Where to send the user after Google auth (default: customer dashboard). */
   redirectTo?: string;
-  /** Dark variant for the admin login page. */
-  dark?: boolean;
 }
 
 export default function GoogleSignInButton({
   redirectTo = "/dashboard",
-  dark = false,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const [fallbackUrl, setFallbackUrl] = useState("");
 
   // No Google sign-in unless Supabase is configured
   if (!isSupabaseConfigured()) return null;
@@ -23,35 +22,53 @@ export default function GoogleSignInButton({
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithOAuth({
+      // On success the browser navigates away to Google, so the promise
+      // resolving just means the redirect started. If it resolves with an
+      // error (provider disabled, bad redirect URL, network), show it.
+      const { error, data } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}${redirectTo}`,
         },
       });
       if (error) {
-        console.error("[orwas] Google sign-in failed:", error.message);
+        console.error("[orwas] Google sign-in error:", error.message);
+        setErrMsg(
+          error.message.includes("provider") || error.message.includes("enabled")
+            ? "Google sign-in is not enabled yet. The store owner must enable the Google provider in the Supabase dashboard."
+            : `Google sign-in error: ${error.message}`,
+        );
         setLoading(false);
+        return;
       }
-      // On success the browser redirects to Google — no need to reset state.
+      // Navigation was initiated. If the page is still alive after a moment
+      // (sandboxed preview, popup blocker), offer a manual link instead.
+      const url = data?.url;
+      setTimeout(() => {
+        if (url) setFallbackUrl(url);
+        setLoading(false);
+      }, 1500);
     } catch (error) {
       console.error("[orwas] Google sign-in failed:", error);
+      setErrMsg("Google sign-in failed. Check your internet connection and try again.");
       setLoading(false);
     }
   };
 
   return (
-    <button
+    <div className="w-full">
+      {errMsg && (
+        <p role="alert" className="mb-3 border border-red-300 bg-red-50 px-3 py-2 text-center text-xs text-red-700">
+          {errMsg}
+        </p>
+      )}
+      <button
       type="button"
       onClick={handleGoogle}
       disabled={loading}
-      className={
-        dark
-          ? "flex w-full items-center justify-center gap-3 border border-orwas-cream/30 bg-transparent py-4 text-[10px] uppercase tracking-[0.3em] text-orwas-cream transition-colors hover:bg-orwas-cream/10 disabled:opacity-60"
-          : "flex w-full items-center justify-center gap-3 border border-orwas-sand bg-white py-4 text-[10px] uppercase tracking-[0.3em] text-orwas-ink transition-colors hover:bg-orwas-mist disabled:opacity-60"
-      }
+      className="flex w-full items-center justify-center gap-3 rounded-sm border border-[#dadce0] bg-white py-3 text-sm font-medium text-[#3c4043] shadow-sm transition-colors hover:bg-[#f8f9fa] disabled:opacity-60"
     >
-      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="#4285F4"
           d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
@@ -70,6 +87,15 @@ export default function GoogleSignInButton({
         />
       </svg>
       {loading ? "Connecting…" : "Continue with Google"}
-    </button>
+      </button>
+      {fallbackUrl && (
+        <a
+          href={fallbackUrl}
+          className="mt-3 block border border-orwas-amber bg-orwas-amber/10 px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-orwas-ink transition-colors hover:bg-orwas-amber"
+        >
+          Nothing happened? Tap here to continue with Google →
+        </a>
+      )}
+    </div>
   );
 }

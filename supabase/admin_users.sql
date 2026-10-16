@@ -16,10 +16,11 @@ insert into public.admin_users (email)
 values ('odhiambogregory988@gmail.com')
 on conflict (email) do nothing;
 
--- Secondary owner account used for admin sign-in (odhiambogregory985).
-insert into public.admin_users (email)
-values ('odhiambogregory985@gmail.com')
-on conflict (email) do nothing;
+-- Nothing else is seeded on purpose. Every extra admin account is added by
+-- the owner through the admin panel — never by re-running this file. (An older
+-- version of this script inserted odhiambogregory985@gmail.com here, which
+-- silently re-granted admin rights to a retired account on every re-run.)
+delete from public.admin_users where email = 'odhiambogregory985@gmail.com';
 
 -- First Google sign-in with the owner email auto-creates the admin account.
 -- This lets the owner "sign up as admin with Google" without any setup.

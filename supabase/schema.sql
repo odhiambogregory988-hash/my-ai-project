@@ -13,11 +13,14 @@ create table if not exists public.profiles (
   name text not null default '',
   address text not null default '',
   avatar_url text not null default '',
+  -- Age in years, as entered at sign-up (13–120, enforced client-side).
+  age int,
   created_at timestamptz not null default now()
 );
 
 -- Safe to re-run: adds the column if an older schema is already applied.
 alter table public.profiles add column if not exists avatar_url text not null default '';
+alter table public.profiles add column if not exists age int;
 
 -- Auto-create a profile when someone signs up
 create or replace function public.handle_new_user()
@@ -27,14 +30,15 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, name)
+  insert into public.profiles (id, name, age)
   values (
     new.id,
     coalesce(
       new.raw_user_meta_data->>'full_name',
       new.raw_user_meta_data->>'name',
       ''
-    )
+    ),
+    nullif(new.raw_user_meta_data->>'age', '')::int
   )
   on conflict (id) do nothing;
   return new;

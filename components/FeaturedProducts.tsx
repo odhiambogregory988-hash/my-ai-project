@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import { formatPrice } from "@/lib/store";
 import { useStore } from "@/components/StoreProvider";
@@ -10,7 +11,7 @@ export default function FeaturedProducts() {
   const { products, locale, currency, addToCart } = useStore();
 
   return (
-    <Section label="Featured Pieces" className="py-section overflow-hidden">
+    <Section label="Featured Pieces" className="py-section overflow-hidden content-auto">
       <h2 className="text-display-lg font-display text-orwas-ink mb-12 reveal">
         Object <span className="text-orwas-clay italic">&amp; Form</span>
       </h2>
@@ -24,10 +25,12 @@ export default function FeaturedProducts() {
           >
             <div className="img-hover aspect-[3/4] bg-orwas-sand/30 rounded-sm relative overflow-hidden">
               {product.image ? (
-                <img
+                <Image
                   src={product.image}
                   alt={product.name}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 256px, 288px"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-orwas-clay text-[10px] uppercase tracking-[0.3em]">
