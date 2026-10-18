@@ -135,7 +135,13 @@ function OrdersContent() {
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                         {item.image ? (
-                          <Image src={item.image} alt={item.name} width={48} height={56} className="h-14 w-12 shrink-0 rounded-sm object-cover" />
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            width={48}
+                            height={56}
+                            className="h-14 w-12 shrink-0 rounded-sm object-cover"
+                          />
                         ) : (
                           <div className="h-14 w-12 shrink-0 rounded-sm bg-orwas-mist" />
                         )}

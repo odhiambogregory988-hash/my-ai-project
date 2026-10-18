@@ -42,6 +42,18 @@ describe("order history", () => {
     await findOrder("ORW-DOES-NOT-EXIST");
   });
 
+  bench("findOrder - cancelled order number is excluded", async () => {
+    // Regression check: the public tracking lookup treats a cancelled order
+    // number the same as an unknown one, because cancelled orders are
+    // excluded from the public surface.
+    const cancelled = orders.find((o) => o.status === "Cancelled");
+    if (!cancelled) return;
+    const found = await findOrder(cancelled.id);
+    if (found !== null) {
+      throw new Error(`Expected findOrder(${cancelled.id}) to return null for a cancelled order, got ${found.id}`);
+    }
+  });
+
   bench("updateOrderStatus - rewrite 500 orders", async () => {
     await updateOrderStatus(lastOrderId, "Shipped");
   });

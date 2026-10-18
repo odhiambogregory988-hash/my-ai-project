@@ -20,8 +20,8 @@ export interface Customer {
 }
 
 export type OrderStatus = "Processing" | "Shipped" | "Delivered" | "Cancelled";
-
 export const ORDER_STATUSES: OrderStatus[] = ["Processing", "Shipped", "Delivered", "Cancelled"];
+export const ALL_KNOWN_STATUSES = ORDER_STATUSES;
 
 export interface OrderItem {
   id: string;
@@ -49,11 +49,16 @@ const DELIVERY_FEE = 125;
 /**
  * Unguessable order reference.
  *
- * Order numbers are the only thing protecting `track_order` (public, no login),
- * which returns the customer's name, items and totals. The old format was
- * `ORW-<timestamp><3 random digits>` — a few hundred possibilities per
- * millisecond — so a stranger could have walked the keyspace and read other
- * people's orders. This uses crypto randomness instead (48 bits).
+ * Order numbers are the only thing protecting public order tracking
+ * (`track_order` RPC and the matching browser demo fallback). Both paths
+ * return the customer's name, items, and totals but intentionally exclude
+ * cancelled orders, because a public self-service lookup should not
+ * re-surface orders that were cancelled.
+ *
+ * The old order format was `ORW-<timestamp><3 random digits>` — a few
+ * hundred possibilities per millisecond — so a stranger could have walked
+ * the keyspace and read other people's orders. This uses crypto randomness
+ * instead (48 bits).
  */
 function newOrderNumber() {
   const random = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
@@ -223,7 +228,12 @@ function demoOrdersFor(customerEmail: string) {
 
 function demoFindOrder(id: string) {
   const normalized = id.trim().toUpperCase();
-  return demoLoadOrders().find((o) => o.id.toUpperCase() === normalized) ?? null;
+  // The public tracking surface excludes cancelled orders, matching the
+  // Supabase track_order() RPC. A visitor should not be able to look up a
+  // cancelled order number and see its summary.
+  return demoLoadOrders()
+    .filter((o) => o.status !== "Cancelled")
+    .find((o) => o.id.toUpperCase() === normalized) ?? null;
 }
 
 /** Runs the Supabase path when configured; otherwise falls back to the demo. */
@@ -517,7 +527,11 @@ export async function saveCustomers(customers: Customer[]) {
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  demoSaveOrders(demoLoadOrders().map((o) => (o.id === id ? { ...o, status } : o)));
+  demoSaveOrders(
+    demoLoadOrders().map((o) =>
+      o.id === id ? { ...o, status: status as OrderStatus } : o,
+    ),
+  );
 }
 
 export function formatDate(iso: string) {

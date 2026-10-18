@@ -12,7 +12,16 @@ export function createSupabaseBrowserClient() {
 export function isSupabaseConfigured() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  return Boolean(url && anon && url.includes("supabase.co") && anon.length > 20);
+
+  // Vercel warns when a NEXT_PUBLIC_ variable is set to a value that looks like
+  // a callback path rather than the project URL. That usually means the env var
+  // was filled in with the wrong value (for example the OAuth redirect URL).
+  // When that happens, trust the env var value over any local .env.local file.
+  if (url && url.includes("/auth/v1/callback")) {
+    return false;
+  }
+
+  return Boolean(url && anon && url.includes("supabase.co"));
 }
 
 /** Server-only client with the service role key (bypasses RLS). Never used on the client. */

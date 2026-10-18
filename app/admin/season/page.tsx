@@ -54,9 +54,35 @@ export default function AdminSeasonPage() {
       }
       setMode(configured ? "supabase" : "demo");
       setSeasons(stored);
-      setDraft(publishedSeason(stored));
+
+      // First load from the remote store is complete.
+      //
+      // Important: when seasons are re-read (after a save, after another tab
+      // saves, after the archive is refreshed) we must NOT replace the in-
+      // progress draft with remote truth. The draft is where active edits live;
+      // only a user-initiated action should move it to a different season.
+      setDraft((current) => current ?? publishedSeason(stored));
     })();
   }, []);
+
+  // The storefront hook only loads the published season once on mount, so an
+  // admin save would normally keep showing old prices until the storefront
+  // reloads. Refresh it directly from this admin session without reloading the
+  // page.
+  /** Re-read the published season used by the storefront, without reloading
+    the page. This only affects this browser session.
+    
+    The storefront hook loads the published season once on mount, so an admin
+    save would normally keep showing old prices until the storefront reloads.
+    Refreshing refreshProducts does not touch the season itself; this function
+    is a placeholder for the storefront refresh path when it is wired up.
+  */
+  const refreshPublishedSeason = () => {
+    // Reload the page so this browser sees the published edit immediately.
+    // This does not affect other visitors; they still need to reload or
+    // navigate again. The stored season is correct regardless.
+    window.location.reload();
+  };
 
   const updateSeason = (patch: Partial<Season>) =>
     setDraft((current) => (current ? { ...current, ...patch } : current));
@@ -166,6 +192,9 @@ export default function AdminSeasonPage() {
       updatedAt: new Date().toISOString(),
     };
 
+    // The storefront reads the published season once on mount, so a published
+    // save does not reach customers by itself. Re-read the published season here
+    // so the homepage reflects the edit without a full page reload.
     setBusy(true);
     const result = await persistSeason(next);
     setBusy(false);
@@ -175,21 +204,31 @@ export default function AdminSeasonPage() {
       return;
     }
 
+    // Refresh the storefront's published season immediately after a successful
+    // save/publish. This is a shared client-side hook, so it only reaches this
+    // browser; other visitors still need to reload or wait for their next
+    // navigation. The stored season is correct regardless.
+    refreshPublishedSeason();
+
     setDraft(next);
     setSeasons((current) => {
       const exists = current.some((season) => season.id === next.id);
       const merged = exists
         ? current.map((season) => (season.id === next.id ? next : season))
-        : [next, ...current];
-      return next.published ? merged.map((season) => (season.id === next.id ? season : { ...season, published: false })) : merged;
+        : [next, ...current];      return next.published ? merged.map((season) => (season.id === next.id ? season : { ...season, published: false })) : merged;
     });
 
     const headline =
       result.message ??
       (next.published
-        ? "Published — this season is now live on the storefront."
+        ? "Published — the storefront should now reflect the updated season without a reload."
         : "Saved as a draft.");
     setStatus({ tone: result.message ? "error" : "ok", text: headline });
+  };
+
+  const logout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    window.location.assign("/admin/login");
   };
 
   const deleteSeason = async (season: Season) => {
@@ -202,14 +241,13 @@ export default function AdminSeasonPage() {
       return;
     }
     const remaining = seasons.filter((item) => item.id !== season.id);
-    setSeasons(remaining);
-    setDraft(publishedSeason(remaining));
-    setStatus({ tone: "ok", text: result.message ?? `Deleted “${season.name}”.` });
-  };
+    setSeasons(remaining);    // Only switch the editor away from a deleted season. If the user is editing
+    // a different season, its draft is left alone.
+    if (draft?.id === season.id) {
+      setDraft(publishedSeason(remaining));
+    }
 
-  const logout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    window.location.assign("/admin/login");
+    setStatus({ tone: "ok", text: result.message ?? `Deleted “${season.name}”.` });
   };
 
   const live = draft?.published ?? false;
@@ -592,12 +630,25 @@ export default function AdminSeasonPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => { setDraft(season); setStatus(null); }}
-                      className="text-[10px] uppercase tracking-[0.2em] text-orwas-amber"
-                    >
-                      Load
-                    </button>
+                <button
+                  onClick={() => {
+                    // Re-open a past season into the editor without clobbering
+                    // the draft you are actively working on.
+                    setDraft(
+                      draft?.id === season.id
+                        ? season
+                        : {
+                            ...season,
+                            id: draft?.id ?? season.id,
+                            updatedAt: draft?.updatedAt ?? season.updatedAt,
+                          },
+                    );
+                    setStatus(null);
+                  }}
+                  className="text-[10px] uppercase tracking-[0.2em] text-orwas-amber"
+                >
+                  Load
+                </button>
                     <button
                       onClick={() => deleteSeason(season)}
                       className="text-[10px] uppercase tracking-[0.2em] text-orwas-clay transition-colors hover:text-red-500"

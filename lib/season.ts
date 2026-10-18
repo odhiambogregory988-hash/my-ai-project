@@ -358,7 +358,16 @@ export async function loadPublishedSeason(): Promise<Season> {
   }
 }
 
-/** A season card as a purchasable product, with stock read live from the catalog. */
+/** A season card as a purchasable product, with stock read live from the catalog.
+
+ * The season editor owns price, name, description, image, collection, badge,
+ * delivery, and stock fallback per piece. Those fields are the season's own
+ * values and must not be overwritten by the linked catalog product.
+ *
+ * Stock is the one thing that stays live from the catalog when a piece is
+ * linked, because inventory is the only field the admin editor intentionally
+ * delegates to the catalog.
+ */
 export function resolveSeasonItem(item: SeasonItem, products: Product[]): Product {
   const linked = item.productId
     ? products.find((product) => product.id === item.productId)
@@ -367,7 +376,7 @@ export function resolveSeasonItem(item: SeasonItem, products: Product[]): Produc
   return {
     id: linked?.id ?? item.id,
     name: item.name || linked?.name || "Seasonal piece",
-    price: item.price || linked?.price || 0,
+    price: item.price,
     collection: item.collection || linked?.collection || "",
     inventory: linked ? linked.inventory : item.inventory,
     category: item.category,
@@ -379,6 +388,9 @@ export function resolveSeasonItem(item: SeasonItem, products: Product[]): Produc
 /* ============================================================
    Admin read / write (via /api/admin/season, with demo fallback)
    ============================================================ */
+
+
+
 
 export interface SeasonStore {
   seasons: Season[];

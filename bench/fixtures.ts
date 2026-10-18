@@ -59,7 +59,7 @@ export function makeOrders(count: number): Order[] {
       subtotal,
       deliveryFee,
       total: subtotal + deliveryFee,
-      status: STATUSES[Math.floor(random() * STATUSES.length)],
+      status: index === 5 ? "Cancelled" : STATUSES[index % STATUSES.length],
       createdAt: new Date(Date.UTC(2024, index % 12, (index % 27) + 1)).toISOString(),
     };
   });

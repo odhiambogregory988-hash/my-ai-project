@@ -169,9 +169,7 @@ export default function CollectionsGrid() {
                         }`} />
                         {stock === "in" ? "In Stock" : stock === "low" ? `Only ${product.inventory} left` : "Out of Stock"}
                       </div>
-                    </div>
-
-                    {/* Content */}
+                    </div>                    {/* Content */}
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <h4 className="font-display text-lg text-orwas-cream mb-1 line-clamp-2 md:text-xl">
                         {product.name}
@@ -191,7 +189,8 @@ export default function CollectionsGrid() {
                           <span className="text-orwas-cream/50 text-xs line-through">
                             KSh {item.originalPrice.toLocaleString()}
                           </span>
-                        )}
+                        )
+                      }
                       </div>
 
                       {/* Delivery */}

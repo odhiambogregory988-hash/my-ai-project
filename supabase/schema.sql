@@ -119,6 +119,11 @@ create policy "admins read all profiles" on public.profiles
 --    Returns a minimal summary by order number via a secure
 --    function, so we never expose raw table access to guests.
 -- ------------------------------------------------------------
+-- Public order lookup. Used by the anonymous /track page.
+--
+-- It returns the customer name, status, dates, items, and totals, but it
+-- intentionally excludes cancelled orders. A public self-service lookup
+-- should not re-surface orders that were cancelled.
 create or replace function public.track_order(p_order_no text)
 returns table (
   order_no text,
@@ -137,7 +142,8 @@ stable
 as $$
   select order_no, customer_name, status, created_at, items, subtotal, delivery_fee, total
   from public.orders
-  where order_no = p_order_no;
+  where order_no = p_order_no
+  and status <> 'Cancelled';
 $$;
 
 revoke all on function public.track_order(text) from public;
@@ -166,7 +172,7 @@ as $$
     p.name,
     p.address,
     p.avatar_url,
-    u.raw_app_meta_data->>'provider',
+    u.raw_app_meta_data->>'provider'
     p.created_at
   from public.profiles p
   join auth.users u on u.id = p.id

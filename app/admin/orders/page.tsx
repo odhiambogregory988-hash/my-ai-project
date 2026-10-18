@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import {
   formatDate,
   loadOrders,
-  ORDER_STATUSES,
   Order,
   OrderStatus,
   saveOrders,
   updateOrderStatus,
 } from "@/lib/accounts";
+import { ORDER_STATUSES, type OrderStatus as OrderStatusAlias } from "@/lib/order-statuses";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -76,10 +76,13 @@ export default function AdminOrdersPage() {
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); window.location.assign("/admin/login"); };
 
   const statusBadge = (status: OrderStatus) =>
-    status === "Processing" ? "border-orwas-amber/40 bg-orwas-amber/15 text-orwas-ink"
-    : status === "Shipped" ? "border-blue-200 bg-blue-50 text-blue-700"
-    : status === "Delivered" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-    : "border-red-200 bg-red-50 text-red-600";
+    status === "Processing"
+      ? "border-orwas-amber/40 bg-orwas-amber/15 text-orwas-ink"
+      : status === "Shipped"
+        ? "border-blue-200 bg-blue-50 text-blue-700"
+        : status === "Delivered"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-red-200 bg-red-50 text-red-600";
 
   return (
     <main className="min-h-screen bg-orwas-ivory px-6 py-10 text-orwas-ink md:px-12 lg:px-20">

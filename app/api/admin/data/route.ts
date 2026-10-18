@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, resolveDataClient } from "@/lib/admin-server";
-
-/** The only statuses the admin UI offers — anything else is rejected. */
-const ORDER_STATUSES = ["Processing", "Shipped", "Delivered", "Cancelled"] as const;
+import { ORDER_STATUSES } from "@/lib/order-statuses";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -101,7 +99,10 @@ export async function GET(request: NextRequest) {
         email: row.email,
         address: row.address,
         avatarUrl: row.avatar_url,
-        provider: row.provider || "email",
+        // Keep this display field deliberately narrow: the newer admin model
+        // treats identity through the roster/owner/claim path, so we only
+        // expose sign-in provider as a low-detail convenience label.
+        provider: (row.provider as string) || "email",
         createdAt: row.created_at,
       }));
     }
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
     switch (body.action) {
       case "update-order-status": {
         if (!orderNo) return NextResponse.json({ error: "Missing order number" }, { status: 400 });
-        if (!(ORDER_STATUSES as readonly string[]).includes(status)) {
+        if (!ORDER_STATUSES.includes(status as never)) {
           return NextResponse.json({ error: "Unknown order status" }, { status: 400 });
         }
         const { error } = await supabase.from("orders").update({ status }).eq("order_no", orderNo);
