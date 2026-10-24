@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useStore } from "@/components/StoreProvider";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -15,7 +15,6 @@ const NAV_LINKS = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Account", href: "/dashboard" },
-  { label: "Admin", href: "/admin" },
 ];
 
 export default function Header({ showAnnouncement = false }: { showAnnouncement?: boolean }) {
@@ -23,25 +22,29 @@ export default function Header({ showAnnouncement = false }: { showAnnouncement?
   const [cartOpen, setCartOpen] = useState(false);
   const { cartCount } = useStore();
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileOpen]);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-orwas-ink/90 backdrop-blur-md gpu-layer">
       {showAnnouncement && <AnnouncementBar />}
-      <nav className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-6">
-        {/* Brand mark */}
+      <nav className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-6" aria-label="Main navigation">
         <Link href="/" className="relative z-10">
-          <span className="text-orwas-cream font-display text-2xl tracking-[0.08em]">
-            ORWAS
-          </span>
+          <span className="text-orwas-cream font-display text-2xl tracking-[0.08em]">ORWAS</span>
         </Link>
 
-        {/* Desktop nav */}
         <ul className="hidden lg:flex items-center gap-7">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
-              <Link
-                href={link.href}
-                className="text-orwas-cream/70 hover:text-orwas-cream text-xs tracking-[0.2em] uppercase transition-colors duration-300"
-              >
+              <Link href={link.href} className="text-orwas-cream/70 hover:text-orwas-cream text-xs tracking-[0.2em] uppercase transition-colors duration-300">
                 {link.label}
               </Link>
             </li>
@@ -49,32 +52,34 @@ export default function Header({ showAnnouncement = false }: { showAnnouncement?
         </ul>
 
         <div className="flex items-center gap-5">
-          <button onClick={() => setCartOpen(true)} className="text-orwas-cream text-xs uppercase tracking-[0.2em]" aria-label="Open shopping cart">
+          <button onClick={() => setCartOpen(true)} className="text-orwas-cream text-xs uppercase tracking-[0.2em]" aria-label={`Open shopping cart, ${cartCount} items`}>
             Cart ({cartCount})
           </button>
-          <button className="lg:hidden relative z-10 flex flex-col gap-1.5" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+          <button
+            type="button"
+            className="lg:hidden relative z-10 flex flex-col gap-1.5"
+            onClick={() => setMobileOpen((open) => !open)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
+          >
             <span className={`block w-6 h-px bg-orwas-cream transition-all duration-300 ${mobileOpen ? "rotate-45 translate-y-[4px]" : ""}`} />
             <span className={`block w-6 h-px bg-orwas-cream transition-all duration-300 ${mobileOpen ? "-rotate-45 -translate-y-[4px]" : ""}`} />
           </button>
         </div>
       </nav>
 
-      {/* Mobile overlay */}
       <div
+        id="mobile-navigation"
+        aria-hidden={!mobileOpen}
         className={`fixed inset-0 bg-orwas-ink/95 backdrop-blur-md transition-all duration-500 lg:hidden ${
-          mobileOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          mobileOpen ? "visible opacity-100 pointer-events-auto" : "invisible opacity-0 pointer-events-none"
         }`}
       >
         <ul className="flex flex-col items-center justify-center h-full gap-10">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="text-orwas-cream font-display text-3xl tracking-wide hover:text-orwas-amber transition-colors duration-300"
-              >
+              <Link href={link.href} onClick={() => setMobileOpen(false)} tabIndex={mobileOpen ? undefined : -1} className="text-orwas-cream font-display text-3xl tracking-wide hover:text-orwas-amber transition-colors duration-300">
                 {link.label}
               </Link>
             </li>
