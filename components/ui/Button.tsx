@@ -7,6 +7,7 @@ interface ButtonProps {
   variant?: "filled" | "ghost" | "underline";
   className?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export default function Button({
@@ -15,6 +16,7 @@ export default function Button({
   variant = "filled",
   className = "",
   onClick,
+  disabled = false,
 }: ButtonProps) {
   const base =
     "inline-flex items-center gap-2 text-sm tracking-widest uppercase transition-all duration-500 ease-out-expo";
@@ -31,15 +33,11 @@ export default function Button({
   const classes = `${base} ${variants[variant]} ${className}`;
 
   if (href) {
-    return (
-      <Link href={href} className={classes}>
-        {children}
-      </Link>
-    );
+    return <Link href={href} className={classes}>{children}</Link>;
   }
 
   return (
-    <button onClick={onClick} className={classes}>
+    <button type="button" onClick={onClick} disabled={disabled} className={`${classes} disabled:cursor-not-allowed disabled:opacity-50`}>
       {children}
     </button>
   );
