@@ -4,12 +4,12 @@
 
 @layer base {
   :root {
-    --color-ink: 17 24 39;      /* Primary #111827 */
-    --color-clay: 139 94 60;    /* Accent #8B5E3C */
+    --color-ink: 17 24 39;
+    --color-clay: 139 94 60;
     --color-sand: 229 231 235;
     --color-cream: 255 255 255;
-    --color-ivory: 249 250 251; /* Background #F9FAFB */
-    --color-amber: 212 175 55;  /* Gold #D4AF37 */
+    --color-ivory: 249 250 251;
+    --color-amber: 212 175 55;
   }
 
   html {
@@ -50,84 +50,58 @@
   }
 
   @supports not (animation-timeline: view()) {
-    .reveal {
-      opacity: 1;
-      transform: none;
-    }
-
-    .line-accent {
-      @apply h-px origin-left bg-orwas-amber;
-    }
+    .reveal { opacity: 1; transform: none; }
+    .line-accent { @apply h-px origin-left bg-orwas-amber; }
   }
 
   .reveal-delay-1 { animation-delay: 0.1s; }
   .reveal-delay-2 { animation-delay: 0.2s; }
   .reveal-delay-3 { animation-delay: 0.3s; }
-
-  .soft-card {
-    @apply border border-orwas-clay/10 bg-orwas-cream shadow-[0_20px_60px_rgba(26,23,20,0.03)];
-  }
-
-  /* Image hover — subtle scale + desaturate lift */
-  .img-hover {
-    @apply overflow-hidden;
-  }
-  .img-hover img {
-    @apply transition-all duration-700 ease-out-expo;
-  }
-  .img-hover:hover img {
-    transform: scale(1.04);
-    filter: brightness(1.05);
-  }
-
-  /* Off-screen rendering containment for buttery 60/120fps scrolling */
-  .content-auto {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 700px;
-  }
-
-  /* GPU compositing helper */
-  .gpu-layer {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
-
-  /* Announcement bar crossfade — CSS-only replacement for framer-motion */
-  .announcement-crossfade {
-    animation: announcement-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+  .soft-card { @apply border border-orwas-clay/10 bg-orwas-cream shadow-[0_20px_60px_rgba(26,23,20,0.03)]; }
+  .img-hover { @apply overflow-hidden; }
+  .img-hover img { @apply transition-all duration-700 ease-out-expo; }
+  .img-hover:hover img { transform: scale(1.04); filter: brightness(1.05); }
+  .content-auto { content-visibility: auto; contain-intrinsic-size: 1px 700px; }
+  .gpu-layer { transform: translateZ(0); backface-visibility: hidden; }
+  .announcement-crossfade { animation: announcement-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
 }
 
 @keyframes reveal-up {
-  to {
-    opacity: 1;
-    transform: translateY(0) translateZ(0);
-  }
+  to { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 
 @keyframes announcement-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* "Added to bag" toast — slides up, gold timer bar drains below */
-.cart-toast {
-  animation: toast-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
+.cart-toast { animation: toast-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes toast-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .line-accent {
+    transform: scaleX(1);
+    animation: none !important;
   }
 }
