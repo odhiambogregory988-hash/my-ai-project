@@ -172,7 +172,7 @@ as $$
     p.name,
     p.address,
     p.avatar_url,
-    u.raw_app_meta_data->>'provider'
+    u.raw_app_meta_data->>'provider' as provider,
     p.created_at
   from public.profiles p
   join auth.users u on u.id = p.id
